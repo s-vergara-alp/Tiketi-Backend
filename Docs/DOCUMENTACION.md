@@ -1587,18 +1587,46 @@ if (process.env.NODE_ENV === 'production') {
 
 ## Diagramas del Sistema
 
-Para una documentación completa de todos los diagramas UML, de arquitectura, secuencia, flujo y base de datos del sistema, incluyendo los nuevos componentes de red mesh y BitChat, consulte el documento dedicado:
+Para una documentación completa de todos los diagramas UML, de arquitectura, secuencia, flujo y base de datos del sistema, incluyendo los nuevos componentes de red mesh y BitChat, consulte los diagramas disponibles en el directorio:
 
-**📋 [DIAGRAMAS_SISTEMA.md](./DIAGRAMAS_SISTEMA.md)**
+**📋 [Diagramas/](./Diagramas/)**
 
-Este documento incluye:
+### Diagramas de Arquitectura
+- **[Arquitectura General del Sistema](./Diagramas/Arquitectura%20General%20del%20Sistema.svg)**: Vista general de la arquitectura del sistema
+- **[Arquitectura de API Endpoints](./Diagramas/Arquitectura%20de%20API%20Endpoints.svg)**: Estructura de endpoints y middleware
+- **[Arquitectura de Comunicación Mesh (BitChat)](./Diagramas/Arquitectura%20de%20Comunicación%20Mesh%20(BitChat).svg)**: Arquitectura de red mesh y BitChat
+- **[Arquitectura de Middleware Stack](./Diagramas/Arquitectura%20de%20Middleware%20Stack.svg)**: Stack de middleware del sistema
+- **[Arquitectura de Manejo de Errores](./Diagramas/Arquitectura%20de%20Manejo%20de%20Errores.svg)**: Sistema de manejo de errores
+- **[Arquitectura de Red](./Diagramas/Arquitectura%20de%20Red.svg)**: Arquitectura de red y despliegue
 
-- **Diagramas de Arquitectura**: Sistema general y arquitectura mesh
-- **Diagramas de Clases**: Modelos de datos y servicios
-- **Diagramas de Secuencia**: Flujos de comunicación y procesos
-- **Diagramas de Base de Datos**: ERD completo con tablas mesh
-- **Diagramas de Red**: Arquitectura de despliegue y comunicaciones
-- **Diagramas de Testing**: Estrategias de pruebas y CI/CD
+### Diagramas de Clases
+- **[Diagrama de Clases Principal](./Diagramas/Diagrama%20de%20Clases%20Principal.svg)**: Modelos de datos principales
+- **[Diagrama de Clases de Servicios](./Diagramas/Diagrama%20de%20Clases%20de%20Servicios.svg)**: Servicios y lógica de negocio
+
+### Diagramas de Secuencia
+- **[Secuencia de Compra de Entrada](./Diagramas/Secuencia%20de%20Compra%20de%20Entrada.svg)**: Flujo de compra de entradas
+- **[Secuencia de Validación de Entrada](./Diagramas/Secuencia%20de%20Validación%20de%20Entrada.svg)**: Proceso de validación
+- **[Secuencia de Proceso de Pago](./Diagramas/Secuencia%20de%20Proceso%20de%20Pago.svg)**: Flujo de procesamiento de pagos
+- **[Secuencia de Sistema de Chat](./Diagramas/Secuencia%20de%20Sistema%20de%20Chat.svg)**: Comunicación en tiempo real
+- **[Secuencia de Comunicación Mesh](./Diagramas/Secuencia%20de%20Comunicación%20Mesh.svg)**: Comunicación peer-to-peer
+- **[Secuencia de Gestión de Estadías](./Diagramas/Secuencia%20de%20Gestión%20de%20Estadías.svg)**: Control de acceso a espacios
+
+### Diagramas de Flujo
+- **[Flujo de Compra de Entrada](./Diagramas/Flujo%20de%20Compra%20de%20Entrada.svg)**: Proceso de compra
+- **[Flujo de Casos de Uso](./Diagramas/Flujo%20de%20Casos%20de%20Uso.svg)**: Casos de uso del sistema
+- **[Flujo de Datos](./Diagramas/Flujo%20de%20Datos.svg)**: Flujo de datos en el sistema
+- **[Flujo de Gestión de Acceso a Estadías](./Diagramas/Flujo%20de%20Gestión%20de%20Acceso%20a%20Estadías.svg)**: Control de acceso
+- **[Flujo de Procesamiento de Mensajes Mesh](./Diagramas/Flujo%20de%20Procesamiento%20de%20Mensajes%20Mesh.svg)**: Procesamiento de mensajes P2P
+- **[Flujo de Resolución de Conflictos en Sincronización](./Diagramas/Flujo%20de%20Resolución%20de%20Conflictos%20en%20Sincronización.svg)**: Sincronización offline
+
+### Diagramas de Base de Datos y Despliegue
+- **[ERD](./Diagramas/ERD.svg)**: Diagrama de entidad-relación completo
+- **[Diagrama de Despliegue](./Diagramas/Diagrama%20de%20Despliegue.svg)**: Arquitectura de despliegue
+- **[Paquetes](./Diagramas/Paquetes.svg)**: Estructura de paquetes del sistema
+
+### Diagramas de Testing y CI/CD
+- **[Estrategia de Testing](./Diagramas/Estrategia%20de%20Testing.svg)**: Estrategias de pruebas
+- **[Pipeline CICD](./Diagramas/Pipeline%20CICD.svg)**: Pipeline de integración continua
 
 ### Resumen de Componentes Principales
 
@@ -1622,7 +1650,7 @@ El sistema se compone de los siguientes componentes principales:
    - Control de acceso en tiempo real
    - Registro de actividad
 
-Para ver los diagramas detallados de cada componente, consulte [DIAGRAMAS_SISTEMA.md](./DIAGRAMAS_SISTEMA.md).
+Para ver los diagramas detallados de cada componente, consulte los archivos SVG en el directorio [Diagramas/](./Diagramas/).
 
 ---
 

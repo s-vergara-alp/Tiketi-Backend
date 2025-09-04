@@ -3,7 +3,7 @@ services:
     name: tiikii-festival-api
     env: node
     plan: free
-    buildCommand: npm install && npm run db:migrate && npm run db:seed
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_ENV

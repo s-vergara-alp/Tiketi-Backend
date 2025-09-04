@@ -15,8 +15,27 @@ async function startServer() {
         // Check if database is properly set up
         const hasTables = await database.checkDatabase();
         if (!hasTables) {
-            console.log('Database not initialized. Please run: npm run db:migrate && npm run db:seed');
-            process.exit(1);
+            console.log('Database not initialized. Running migration and seeding...');
+            
+            // Run migration
+            const { exec } = require('child_process');
+            const { promisify } = require('util');
+            const execAsync = promisify(exec);
+            
+            try {
+                console.log('Running database migration...');
+                await execAsync('node src/database/migrate.js');
+                console.log('Migration completed successfully');
+                
+                console.log('Running database seeding...');
+                await execAsync('node src/database/seed.js');
+                console.log('Seeding completed successfully');
+                
+                console.log('Database initialization completed');
+            } catch (error) {
+                console.error('Error initializing database:', error);
+                process.exit(1);
+            }
         }
 
         // Start server

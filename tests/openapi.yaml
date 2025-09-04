@@ -109,27 +109,16 @@ paths:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      user:
-                        $ref: '#/components/schemas/User'
-                      token:
-                        type: string
-                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                      refreshToken:
-                        type: string
-                      expiresIn:
-                        type: string
-                        example: "7d"
                   message:
                     type: string
                     example: "Login successful"
-        '401':
-          $ref: '#/components/responses/UnauthorizedError'
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          $ref: '#/components/responses/ValidationError'
 
   /api/auth/me:
     get:
@@ -143,14 +132,104 @@ paths:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
+                  user:
                     $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    put:
+      summary: Actualizar perfil del usuario
+      description: Actualiza la información del perfil del usuario autenticado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: "John"
+                lastName:
+                  type: string
+                  example: "Doe"
+                phone:
+                  type: string
+                  example: "+1234567890"
+                avatar:
+                  type: string
+                  example: "https://example.com/avatar.jpg"
+                preferences:
+                  type: object
+                  example: {"notifications": true, "theme": "dark"}
+      responses:
+        '200':
+          description: Perfil actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
                   message:
                     type: string
-                    example: "User profile retrieved successfully"
+                    example: "Profile updated successfully"
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/auth/change-password:
+    put:
+      summary: Cambiar contraseña
+      description: Cambia la contraseña del usuario autenticado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                  example: "oldpassword123"
+                newPassword:
+                  type: string
+                  minLength: 6
+                  example: "newpassword123"
+      responses:
+        '200':
+          description: Contraseña cambiada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password changed successfully"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/auth/logout:
+    post:
+      summary: Cerrar sesión
+      description: Cierra la sesión del usuario autenticado
+      responses:
+        '200':
+          description: Sesión cerrada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged out successfully"
         '401':
           $ref: '#/components/responses/UnauthorizedError'
 
@@ -164,18 +243,9 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Festival'
-                  message:
-                    type: string
-                    example: "Festivals retrieved successfully"
+                type: array
+                items:
+                  $ref: '#/components/schemas/Festival'
 
   /api/festivals/{id}:
     get:
@@ -194,16 +264,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/FestivalDetail'
-                  message:
-                    type: string
-                    example: "Festival retrieved successfully"
+                $ref: '#/components/schemas/FestivalDetail'
         '404':
           $ref: '#/components/responses/NotFoundError'
 
@@ -370,7 +431,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [active, used, expired, cancelled]
+            enum: ["active", "used", "expired", "cancelled"]
         - name: festivalId
           in: query
           schema:
@@ -444,7 +505,44 @@ paths:
                   ticket:
                     $ref: '#/components/schemas/Ticket'
 
-    delete:
+  /api/tickets/{id}/transfer:
+    post:
+      summary: Transferir ticket (alternativo)
+      description: Transfiere un ticket a otro titular usando endpoint alternativo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "ticket-123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [newHolderName]
+              properties:
+                newHolderName:
+                  type: string
+                  example: "Jane Doe"
+      responses:
+        '200':
+          description: Ticket transferido exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Ticket transferred successfully"
+                  ticket:
+                    $ref: '#/components/schemas/Ticket'
+
+  /api/tickets/{id}/cancel:
+    post:
       summary: Cancelar ticket
       description: Cancela un ticket
       parameters:
@@ -488,7 +586,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [festivalId, templateId, holderName, paymentMethod]
+              required: [festivalId, templateId, holderName, paymentMethod, amount]
               properties:
                 festivalId:
                   type: string
@@ -508,6 +606,15 @@ paths:
                     token:
                       type: string
                       example: "tok_test_123"
+                amount:
+                  type: number
+                  example: 99.99
+                currency:
+                  type: string
+                  example: "USD"
+                seatInfo:
+                  type: object
+                  example: {"section": "A", "row": "1", "seat": "5"}
       responses:
         '201':
           description: Ticket comprado exitosamente
@@ -516,19 +623,13 @@ paths:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      ticket:
-                        $ref: '#/components/schemas/Ticket'
-                      payment:
-                        $ref: '#/components/schemas/Payment'
                   message:
                     type: string
                     example: "Ticket purchased successfully"
+                  ticket:
+                    $ref: '#/components/schemas/Ticket'
+                  payment:
+                    $ref: '#/components/schemas/Payment'
         '400':
           $ref: '#/components/responses/ValidationError'
 
@@ -629,7 +730,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [pending, completed, failed, refunded]
+            enum: ["pending", "completed", "failed", "refunded"]
         - name: festivalId
           in: query
           schema:
@@ -715,6 +816,54 @@ paths:
                         type: string
                         format: date-time
 
+  /api/tickets/payments/{paymentId}/refund:
+    post:
+      summary: Reembolsar pago (alternativo)
+      description: Procesa un reembolso para un pago usando endpoint alternativo
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "payment-123"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  example: 150.00
+                reason:
+                  type: string
+                  example: "Customer request"
+      responses:
+        '200':
+          description: Reembolso procesado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Refund processed successfully"
+                  refund:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      amount:
+                        type: number
+                      status:
+                        type: string
+                      processedAt:
+                        type: string
+                        format: date-time
+
   /api/mesh/peers:
     get:
       summary: Obtener peers de mesh network
@@ -734,9 +883,6 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/MeshPeer'
-                  message:
-                    type: string
-                    example: "Mesh peers retrieved successfully"
 
     post:
       summary: Registrar/actualizar peer
@@ -746,7 +892,30 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MeshPeer'
+              type: object
+              required: [id, noise_public_key, signing_public_key, nickname]
+              properties:
+                id:
+                  type: string
+                  example: "test-peer-001"
+                noise_public_key:
+                  type: string
+                  example: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                signing_public_key:
+                  type: string
+                  example: "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210"
+                nickname:
+                  type: string
+                  example: "TestPeer001"
+                is_connected:
+                  type: boolean
+                  example: true
+                is_reachable:
+                  type: boolean
+                  example: true
+                metadata:
+                  type: object
+                  example: {"deviceType": "mobile", "appVersion": "1.0.0"}
       responses:
         '200':
           description: Peer registrado/actualizado exitosamente
@@ -760,9 +929,6 @@ paths:
                     example: true
                   data:
                     $ref: '#/components/schemas/MeshPeer'
-                  message:
-                    type: string
-                    example: "Mesh peer registered successfully"
         '400':
           $ref: '#/components/responses/ValidationError'
 
@@ -805,7 +971,31 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MeshMessage'
+              type: object
+              required: [sender_id, content]
+              properties:
+                sender_id:
+                  type: string
+                  example: "test-peer-001"
+                content:
+                  type: string
+                  example: "Test message from mesh network"
+                recipient_id:
+                  type: string
+                  example: "test-peer-002"
+                is_private:
+                  type: boolean
+                  example: true
+                is_encrypted:
+                  type: boolean
+                  example: true
+                delivery_status:
+                  type: string
+                  enum: ["pending", "sent", "delivered", "read", "failed"]
+                  example: "sent"
+                metadata:
+                  type: object
+                  example: {"messageType": "text", "timestamp": 1640995200000}
       responses:
         '201':
           description: Mensaje enviado exitosamente
@@ -819,9 +1009,6 @@ paths:
                     example: true
                   data:
                     $ref: '#/components/schemas/MeshMessage'
-                  message:
-                    type: string
-                    example: "Message sent successfully"
         '400':
           $ref: '#/components/responses/ValidationError'
 
@@ -889,7 +1076,7 @@ paths:
               properties:
                 status:
                   type: string
-                  enum: [pending, sent, delivered, read, failed]
+                  enum: ["pending", "sent", "delivered", "read", "failed"]
                   example: "delivered"
       responses:
         '200':
@@ -915,7 +1102,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Estadia'
+              type: object
+              required: [user_id, festival_id, room_id, access_code, start_time, end_time]
+              properties:
+                user_id:
+                  type: string
+                  example: "user-123"
+                festival_id:
+                  type: string
+                  example: "festival-123"
+                room_id:
+                  type: string
+                  example: "room-123"
+                access_code:
+                  type: string
+                  example: "TEST-ACCESS-001"
+                start_time:
+                  type: string
+                  format: date-time
+                  example: "2024-07-15T18:00:00.000Z"
+                end_time:
+                  type: string
+                  format: date-time
+                  example: "2024-07-17T06:00:00.000Z"
+                metadata:
+                  type: object
+                  example: {"guest_count": 2, "special_requests": "Late checkout requested", "amenities": ["wifi", "breakfast"]}
       responses:
         '201':
           description: Estadía creada exitosamente
@@ -929,9 +1141,6 @@ paths:
                     example: true
                   data:
                     $ref: '#/components/schemas/Estadia'
-                  message:
-                    type: string
-                    example: "Estadia created successfully"
         '400':
           $ref: '#/components/responses/ValidationError'
 
@@ -984,7 +1193,7 @@ paths:
               properties:
                 status:
                   type: string
-                  enum: [active, checked_in, checked_out, cancelled]
+                  enum: ["active", "checked_in", "checked_out", "cancelled"]
                   example: "checked_in"
       responses:
         '200':
@@ -1024,7 +1233,7 @@ paths:
               properties:
                 status:
                   type: string
-                  enum: [active, checked_in, checked_out, cancelled, expired]
+                  enum: ["active", "checked_in", "checked_out", "cancelled", "expired"]
                   example: "checked_in"
       responses:
         '200':
@@ -1394,7 +1603,7 @@ paths:
                   example: -74.0060
                 status:
                   type: string
-                  enum: [online, offline, away]
+                  enum: ["online", "offline", "away"]
                   example: "online"
       responses:
         '200':
@@ -1849,6 +2058,424 @@ paths:
                   count:
                     type: integer
 
+  # Points of Interest (POIs)
+  /api/pois/festival/{festivalId}:
+    get:
+      summary: Obtener POIs de festival
+      description: Lista todos los puntos de interés de un festival
+      parameters:
+        - name: festivalId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "festival-123"
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["stage", "info", "medic", "entrance", "exit", "water", "locker", "lostfound", "charging", "restroom"]
+          example: "stage"
+      responses:
+        '200':
+          description: Lista de POIs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  festivalId:
+                    type: string
+                    example: "festival-123"
+                  festivalName:
+                    type: string
+                    example: "Tiikii Festival 2024"
+                  pois:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/POI'
+                  count:
+                    type: integer
+
+  /api/pois/{id}:
+    get:
+      summary: Obtener POI por ID
+      description: Devuelve la información detallada de un punto de interés
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "poi-123"
+      responses:
+        '200':
+          description: Información del POI
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  poi:
+                    $ref: '#/components/schemas/POI'
+
+  /api/pois/festival/{festivalId}/nearby:
+    get:
+      summary: Obtener POIs cercanos
+      description: Encuentra puntos de interés cercanos a una ubicación
+      parameters:
+        - name: festivalId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "festival-123"
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+          example: 40.7128
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+          example: -74.0060
+        - name: radius
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1000
+          example: 500
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "stage"
+      responses:
+        '200':
+          description: POIs cercanos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  festivalId:
+                    type: string
+                  festivalName:
+                    type: string
+                  location:
+                    type: object
+                    properties:
+                      lat:
+                        type: number
+                      lon:
+                        type: number
+                  radius:
+                    type: integer
+                  kind:
+                    type: string
+                  pois:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/POI'
+                        - type: object
+                          properties:
+                            distance:
+                              type: integer
+                              description: "Distance in meters"
+                  count:
+                    type: integer
+
+  # Schedule
+  /api/schedule/festival/{festivalId}:
+    get:
+      summary: Obtener programación del festival
+      description: Lista toda la programación de un festival
+      parameters:
+        - name: festivalId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "festival-123"
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          example: "2024-07-15"
+        - name: stageId
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "stage-456"
+      responses:
+        '200':
+          description: Programación del festival
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  festivalId:
+                    type: string
+                  festivalName:
+                    type: string
+                  schedule:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScheduleSlot'
+                  count:
+                    type: integer
+
+  /api/schedule/festival/{festivalId}/now:
+    get:
+      summary: Obtener actuaciones actuales y próximas
+      description: Devuelve las actuaciones que están ocurriendo ahora y las próximas
+      parameters:
+        - name: festivalId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "festival-123"
+      responses:
+        '200':
+          description: Actuaciones actuales y próximas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  festivalId:
+                    type: string
+                  festivalName:
+                    type: string
+                  currentTime:
+                    type: string
+                    format: date-time
+                  performances:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/ScheduleSlot'
+                        - type: object
+                          properties:
+                            status:
+                              type: string
+                              enum: ["now", "upcoming", "finished"]
+
+  # Vendors
+  /api/vendors/festival/{festivalId}:
+    get:
+      summary: Obtener vendedores del festival
+      description: Lista todos los vendedores de un festival
+      parameters:
+        - name: festivalId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "festival-123"
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["food", "drink", "merch", "atm", "restroom", "charging", "medical", "security"]
+          example: "food"
+      responses:
+        '200':
+          description: Lista de vendedores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  festivalId:
+                    type: string
+                  festivalName:
+                    type: string
+                  vendors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Vendor'
+                  count:
+                    type: integer
+
+  /api/vendors/{id}:
+    get:
+      summary: Obtener vendedor por ID
+      description: Devuelve la información detallada de un vendedor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "vendor-123"
+      responses:
+        '200':
+          description: Información del vendedor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  vendor:
+                    $ref: '#/components/schemas/Vendor'
+
+  /api/vendors/{id}/wait-time:
+    put:
+      summary: Actualizar tiempo de espera
+      description: Actualiza el tiempo de espera de un vendedor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "vendor-123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [waitTime]
+              properties:
+                waitTime:
+                  type: integer
+                  minimum: 0
+                  example: 15
+      responses:
+        '200':
+          description: Tiempo de espera actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Wait time updated successfully"
+                  vendorId:
+                    type: string
+                  waitTime:
+                    type: integer
+
+  # Widgets
+  /api/widgets/festival/{festivalId}:
+    get:
+      summary: Obtener widgets del festival
+      description: Lista todos los widgets disponibles para un festival
+      parameters:
+        - name: festivalId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "festival-123"
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "user-123"
+      responses:
+        '200':
+          description: Lista de widgets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  festivalId:
+                    type: string
+                  festivalName:
+                    type: string
+                  widgets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Widget'
+
+  /api/widgets/{id}:
+    get:
+      summary: Obtener widget por ID
+      description: Devuelve la información detallada de un widget
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "widget-123"
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "user-123"
+      responses:
+        '200':
+          description: Información del widget
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  widget:
+                    $ref: '#/components/schemas/Widget'
+
+  /api/widgets/{id}/preferences:
+    put:
+      summary: Actualizar preferencias de widget
+      description: Actualiza las preferencias del usuario para un widget específico
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "widget-123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isEnabled:
+                  type: boolean
+                  example: true
+                orderIndex:
+                  type: integer
+                  example: 1
+                customSettings:
+                  type: object
+                  example: {"theme": "dark", "size": "large"}
+      responses:
+        '200':
+          description: Preferencias actualizadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Widget preferences updated successfully"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1995,7 +2622,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [active, used, expired, cancelled]
+          enum: ["active", "used", "expired", "cancelled"]
           example: "active"
         price:
           type: number
@@ -2045,7 +2672,7 @@ components:
           example: "payment-123"
         status:
           type: string
-          enum: [pending, completed, failed, refunded]
+          enum: ["pending", "completed", "failed", "refunded"]
           example: "completed"
         amount:
           type: number
@@ -2117,7 +2744,7 @@ components:
           example: true
         deliveryStatus:
           type: string
-          enum: [sent, delivered, read, failed]
+          enum: ["sent", "delivered", "read", "failed"]
           example: "sent"
         metadata:
           type: object
@@ -2158,7 +2785,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [active, checked_in, checked_out, cancelled]
+          enum: ["active", "checked_in", "checked_out", "cancelled"]
           example: "active"
         checkInTime:
           type: string
@@ -2229,8 +2856,9 @@ components:
         description:
           type: string
           example: "Delicious food and drinks"
-        category:
+        type:
           type: string
+          enum: ["food", "drink", "merch", "atm", "restroom", "charging", "medical", "security"]
           example: "food"
         latitude:
           type: number
@@ -2238,6 +2866,15 @@ components:
         longitude:
           type: number
           example: -74.0060
+        rating:
+          type: number
+          minimum: 0
+          maximum: 5
+          example: 4.5
+        waitTime:
+          type: integer
+          minimum: 0
+          example: 15
         isActive:
           type: boolean
           example: true
@@ -2257,9 +2894,10 @@ components:
         description:
           type: string
           example: "Medical assistance and first aid"
-        category:
+        kind:
           type: string
-          example: "medical"
+          enum: ["stage", "info", "medic", "entrance", "exit", "water", "locker", "lostfound", "charging", "restroom"]
+          example: "medic"
         latitude:
           type: number
           example: 40.7128
@@ -2312,7 +2950,7 @@ components:
           example: "General Chat"
         type:
           type: string
-          enum: [general, friends, group]
+          enum: ["general", "friends", "group"]
           example: "general"
         avatar:
           type: string
@@ -2408,7 +3046,7 @@ components:
           example: -74.0060
         status:
           type: string
-          enum: [online, offline, away]
+          enum: ["online", "offline", "away"]
           example: "online"
         lastSeen:
           type: string
@@ -2597,6 +3235,56 @@ components:
         timestamp:
           type: string
           format: date-time
+
+    ScheduleSlot:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "schedule-123"
+        festivalId:
+          type: string
+          example: "festival-123"
+        artistId:
+          type: string
+          example: "artist-456"
+        stageId:
+          type: string
+          example: "stage-789"
+        startTime:
+          type: string
+          format: date-time
+          example: "2024-07-15T20:00:00.000Z"
+        endTime:
+          type: string
+          format: date-time
+          example: "2024-07-15T22:00:00.000Z"
+        artist:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            bio:
+              type: string
+            genre:
+              type: string
+            imageUrl:
+              type: string
+            socialMedia:
+              type: object
+        stage:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            capacity:
+              type: integer
 
   responses:
     ValidationError:
