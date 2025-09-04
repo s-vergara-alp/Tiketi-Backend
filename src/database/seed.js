@@ -3,7 +3,8 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
-const dbPath = path.join(__dirname, '../../database/tiikii_festival.db');
+// Use environment variable for database path, fallback to default
+const dbPath = process.env.DB_PATH || path.join(__dirname, '../../database/tiikii_festival.db');
 
 // Create database connection
 const db = new sqlite3.Database(dbPath);

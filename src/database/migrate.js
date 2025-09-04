@@ -2,7 +2,8 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const dbPath = path.join(__dirname, '../../database/tiikii_festival.db');
+// Use environment variable for database path, fallback to default
+const dbPath = process.env.DB_PATH || path.join(__dirname, '../../database/tiikii_festival.db');
 const schemaPath = path.join(__dirname, 'schema.sql');
 
 // Ensure database directory exists

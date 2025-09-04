@@ -3,7 +3,7 @@ services:
     name: tiikii-festival-api
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npm run db:migrate && npm run db:seed
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -13,6 +13,6 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: DB_PATH
-        value: /opt/render/project/src/database/tiikii_festival.db
+        value: /tmp/tiikii_festival.db
       - key: CLIENT_URL
         value: https://your-frontend-domain.com
