@@ -1,0 +1,64 @@
+{
+  "name": "tiikii-festival-server",
+  "version": "1.0.0",
+  "description": "Backend server for Tiikii Festival ticket management system",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node -r dotenv/config src/index.js",
+    "start:prod": "NODE_ENV=production node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest --config jest.config.js",
+    "test:unit": "jest --config jest.config.js tests/database.test.js tests/errors.test.js tests/middleware.test.js tests/security.test.js",
+    "test:integration": "jest --config jest.config.js tests/integration.test.js",
+    "test:performance": "jest --config jest.config.js tests/performance.test.js",
+    "test:coverage": "jest --config jest.config.js --coverage",
+    "test:watch": "jest --config jest.config.js --watch",
+    "test:summary": "jest --config jest.config.js tests/summary.test.js",
+    "test:all": "jest --config jest.config.js --verbose --coverage --maxWorkers=1",
+    "db:migrate": "node src/database/migrate.js",
+    "db:seed": "node src/database/seed.js",
+    "db:reset": "node src/database/reset.js",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "security:audit": "npm audit",
+    "security:fix": "npm audit fix"
+  },
+  "keywords": [
+    "festival",
+    "tickets",
+    "payment",
+    "nodejs",
+    "express",
+    "sqlite",
+    "jwt",
+    "api"
+  ],
+  "author": "Tiikii Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "helmet": "^7.1.0",
+    "cors": "^2.8.5",
+    "express-rate-limit": "^7.1.5",
+    "express-slow-down": "^2.0.1",
+    "express-validator": "^7.0.1",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1",
+    "socket.io": "^4.7.4"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "nodemon": "^3.0.2",
+    "eslint": "^8.55.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
