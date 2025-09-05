@@ -9,6 +9,7 @@
 5. [Base de Datos](#base-de-datos)
 6. [API REST](#api-rest)
 7. [Autenticación y Seguridad](#autenticación-y-seguridad)
+7.1. [Control de Acceso Basado en Roles (RBAC)](#control-de-acceso-basado-en-roles-rbac)
 8. [WebSockets y Tiempo Real](#websockets-y-tiempo-real)
 9. [Comunicación Mesh y BitChat](#comunicación-mesh-y-bitchat)
 10. [Gestión de Estadías](#gestión-de-estadías)
@@ -38,8 +39,9 @@ El backend de Tiikii Festival es un sistema de gestión de festivales construido
 - **Gestión de Estadías**: Sistema de acceso a habitaciones y espacios del festival
 - **Sincronización Offline**: Funcionalidad completa sin conexión a internet
 - **Criptografía Avanzada**: Protocolos Noise y Ed25519 para seguridad end-to-end
+- **Control de Acceso Basado en Roles**: Sistema RBAC con roles jerárquicos (admin, staff, security, user)
 - **Testing**: Pruebas unitarias, de integración y de rendimiento
-- **Seguridad**: Limitación de tasa, validación de entrada y manejo de errores
+- **Seguridad**: Limitación de tasa, validación de entrada, manejo de errores y control de acceso granular
 
 ---
 
@@ -459,6 +461,82 @@ POST   /api/chat/rooms                 # Crear sala de chat
 ---
 
 ## Autenticación y Seguridad
+
+### Control de Acceso Basado en Roles (RBAC)
+
+El sistema implementa un sistema RBAC jerárquico con cuatro niveles de roles:
+
+#### Jerarquía de Roles
+```
+admin > staff > security > user
+```
+
+#### Roles Disponibles
+
+1. **User** (Rol por defecto)
+   - Usuarios regulares del festival
+   - Acceso a información pública
+   - Compra de entradas
+   - Funcionalidades básicas
+
+2. **Security**
+   - Personal de seguridad
+   - Validación de códigos QR
+   - Control de acceso a habitaciones
+   - Endpoints de seguridad
+
+3. **Staff**
+   - Personal del festival
+   - Gestión de estadías
+   - Acceso a plantillas de entradas
+   - Funciones administrativas básicas
+
+4. **Admin**
+   - Administradores del sistema
+   - Acceso completo al sistema
+   - Gestión de usuarios
+   - Configuración del sistema
+
+#### Middleware de Control de Acceso
+
+```javascript
+// Requiere privilegios de seguridad o superiores
+const requireSecurity = (req, res, next) => {
+    if (!req.user.is_security && !req.user.is_staff && !req.user.is_admin && 
+        !['security', 'staff', 'admin'].includes(req.user.role)) {
+        return next(new UnauthorizedError('Security access required'));
+    }
+    next();
+};
+
+// Requiere privilegios de staff o superiores
+const requireStaff = (req, res, next) => {
+    if (!req.user.is_staff && !req.user.is_admin && 
+        !['staff', 'admin'].includes(req.user.role)) {
+        return next(new UnauthorizedError('Staff access required'));
+    }
+    next();
+};
+
+// Requiere privilegios de admin
+const requireAdmin = (req, res, next) => {
+    if (!req.user.is_admin && req.user.role !== 'admin') {
+        return next(new UnauthorizedError('Admin access required'));
+    }
+    next();
+};
+```
+
+#### Endpoints Protegidos por Roles
+
+**Seguridad (Security, Staff, Admin):**
+- `POST /api/tickets/validate/:qrPayload` - Validación de códigos QR
+- `POST /api/mesh/estadias/access/validate` - Validación de acceso a habitaciones
+
+**Staff (Staff, Admin):**
+- `GET /api/tickets/templates/:festivalId` - Plantillas de entradas
+- `POST /api/mesh/estadias` - Creación de estadías
+- `PUT /api/mesh/estadias/:id/status` - Actualización de estado de estadías
 
 ### Sistema de Autenticación JWT
 

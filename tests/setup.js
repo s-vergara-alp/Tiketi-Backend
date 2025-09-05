@@ -27,7 +27,7 @@ global.testUtils = {
   },
 
   // Generate test data
-  generateTestUser: (id = 'test-user') => ({
+  generateTestUser: (id = 'test-user', role = 'user') => ({
     id,
     username: `testuser-${id}`,
     email: `test-${id}@example.com`,
@@ -35,7 +35,11 @@ global.testUtils = {
     first_name: 'Test',
     last_name: 'User',
     is_active: 1,
-    is_verified: 1
+    is_verified: 1,
+    is_admin: role === 'admin' ? 1 : 0,
+    is_staff: ['staff', 'admin'].includes(role) ? 1 : 0,
+    is_security: ['security', 'staff', 'admin'].includes(role) ? 1 : 0,
+    role: role
   }),
 
   generateTestFestival: (id = 'test-festival') => ({
@@ -104,11 +108,11 @@ beforeAll(async () => {
   
   // Seed basic test data
   try {
-    // Create a basic test user
+    // Create a basic test user with staff privileges
     await database.run(`
-      INSERT INTO users (id, username, email, password_hash, first_name, last_name, is_active, is_verified)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, ['test-user-base', 'testuser', 'test@example.com', 'hashed_password', 'Test', 'User', 1, 1]);
+      INSERT INTO users (id, username, email, password_hash, first_name, last_name, is_active, is_verified, is_admin, is_staff, is_security, role)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, ['test-user-base', 'testuser', 'test@example.com', 'hashed_password', 'Test', 'User', 1, 1, 1, 1, 1, 'admin']);
     
     // Create a basic test festival
     await database.run(`

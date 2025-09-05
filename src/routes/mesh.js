@@ -5,6 +5,7 @@ const meshNetworkService = require('../services/MeshNetworkService');
 const estadiasService = require('../services/EstadiasService');
 const { body, param, query, validationResult } = require('express-validator');
 const { createValidationError } = require('../utils/errors');
+const { requireStaff, requireSecurity, requireAdmin } = require('../middleware/auth');
 
 // --- Mesh Network Endpoints ---
 
@@ -121,9 +122,9 @@ router.put('/messages/:id/status', [
 /**
  * @route POST /api/mesh/estadias
  * @desc Create a new estadia (stay) for a user at a festival.
- * @access Private (authenticated users only)
+ * @access Private (staff only)
  */
-router.post('/estadias', [
+router.post('/estadias', requireStaff, [
     body('user_id').isString().notEmpty().withMessage('User ID is required'),
     body('festival_id').isString().notEmpty().withMessage('Festival ID is required'),
     body('room_id').isString().notEmpty().withMessage('Room ID is required'),
@@ -178,9 +179,9 @@ router.get('/estadias/user/:userId', [
 /**
  * @route PUT /api/mesh/estadias/:id/status
  * @desc Update the status of an estadia.
- * @access Private (authenticated users only)
+ * @access Private (staff only)
  */
-router.put('/estadias/:id/status', [
+router.put('/estadias/:id/status', requireStaff, [
     param('id').isString().notEmpty().withMessage('Estadia ID is required'),
     body('status').isIn(['active', 'checked_in', 'checked_out', 'cancelled', 'expired']).withMessage('Invalid estadia status'),
 ], asyncHandler(async (req, res) => {
@@ -195,9 +196,9 @@ router.put('/estadias/:id/status', [
 /**
  * @route POST /api/mesh/estadias/access/validate
  * @desc Validate an access code for a specific room.
- * @access Private (authenticated users only)
+ * @access Private (security only)
  */
-router.post('/estadias/access/validate', [
+router.post('/estadias/access/validate', requireSecurity, [
     body('access_code').isString().notEmpty().withMessage('Access Code is required'),
     body('room_id').isString().notEmpty().withMessage('Room ID is required'),
     body('user_id').isString().notEmpty().withMessage('User ID is required'),

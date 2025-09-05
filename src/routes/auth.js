@@ -83,7 +83,7 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
 
     // Get created user (without password)
     const user = await database.get(
-        'SELECT id, username, email, first_name, last_name, avatar, is_verified, created_at FROM users WHERE id = ?',
+        'SELECT id, username, email, first_name, last_name, avatar, is_verified, is_admin, is_staff, is_security, role, created_at FROM users WHERE id = ?',
         [userId]
     );
 
@@ -106,7 +106,7 @@ router.post('/login', loginValidation, asyncHandler(async (req, res) => {
 
     // Find user by email
     const user = await database.get(
-        'SELECT id, username, email, password_hash, first_name, last_name, avatar, is_active, is_verified FROM users WHERE email = ?',
+        'SELECT id, username, email, password_hash, first_name, last_name, avatar, is_active, is_verified, is_admin, is_staff, is_security, role FROM users WHERE email = ?',
         [email]
     );
 
@@ -230,7 +230,7 @@ router.put('/me', authenticateToken, [
 
     // Get updated user
     const updatedUser = await database.get(
-        'SELECT id, username, email, first_name, last_name, avatar, phone, preferences, is_verified, updated_at FROM users WHERE id = ?',
+        'SELECT id, username, email, first_name, last_name, avatar, phone, preferences, is_verified, is_admin, is_staff, is_security, role, updated_at FROM users WHERE id = ?',
         [userId]
     );
 

@@ -28,7 +28,7 @@ const authenticateToken = async (req, res, next) => {
         
         // Get user from database to ensure they still exist and are active
         const user = await database.get(
-            'SELECT id, username, email, first_name, last_name, avatar, is_active, is_verified FROM users WHERE id = ?',
+            'SELECT id, username, email, first_name, last_name, avatar, is_active, is_verified, is_admin, is_staff, is_security, role FROM users WHERE id = ?',
             [decoded.id || decoded.userId]
         );
 
@@ -66,11 +66,36 @@ const requireVerified = (req, res, next) => {
     next();
 };
 
-// Middleware to check if user is admin (if you implement admin roles)
+// Middleware to check if user is admin
 const requireAdmin = (req, res, next) => {
-    // This is a placeholder - implement admin role checking as needed
-    if (!req.user.is_admin) {
-        return next(new UnauthorizedError('You do not have permission to access this resource'));
+    if (!req.user.is_admin && req.user.role !== 'admin') {
+        return next(new UnauthorizedError('Admin access required'));
+    }
+    next();
+};
+
+// Middleware to check if user is staff (admin or staff)
+const requireStaff = (req, res, next) => {
+    if (!req.user.is_staff && !req.user.is_admin && !['staff', 'admin'].includes(req.user.role)) {
+        return next(new UnauthorizedError('Staff access required'));
+    }
+    next();
+};
+
+// Middleware to check if user is security personnel (admin, staff, or security)
+const requireSecurity = (req, res, next) => {
+    if (!req.user.is_security && !req.user.is_staff && !req.user.is_admin && 
+        !['security', 'staff', 'admin'].includes(req.user.role)) {
+        return next(new UnauthorizedError('Security access required'));
+    }
+    next();
+};
+
+// Middleware to check if user has any elevated privileges
+const requireElevated = (req, res, next) => {
+    if (!req.user.is_security && !req.user.is_staff && !req.user.is_admin && 
+        !['security', 'staff', 'admin'].includes(req.user.role)) {
+        return next(new UnauthorizedError('Elevated privileges required'));
     }
     next();
 };
@@ -97,6 +122,9 @@ module.exports = {
     authenticateToken,
     requireVerified,
     requireAdmin,
+    requireStaff,
+    requireSecurity,
+    requireElevated,
     generateToken,
     generateRefreshToken
 };

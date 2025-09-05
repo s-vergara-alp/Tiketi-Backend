@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { asyncHandler, createValidationError, createNotFoundError } = require('../middleware/errorHandler');
+const { requireSecurity, requireStaff } = require('../middleware/auth');
 const ticketService = require('../services/TicketService');
 const paymentService = require('../services/PaymentService');
 
@@ -81,8 +82,8 @@ router.post('/purchase', [
     });
 }));
 
-// Validate ticket (for entry)
-router.post('/validate/:qrPayload', asyncHandler(async (req, res) => {
+// Validate ticket (for entry) - Security personnel only
+router.post('/validate/:qrPayload', requireSecurity, asyncHandler(async (req, res) => {
     const { qrPayload } = req.params;
 
     const validationResult = await ticketService.validateTicket(qrPayload);
@@ -90,7 +91,7 @@ router.post('/validate/:qrPayload', asyncHandler(async (req, res) => {
 }));
 
 // Get ticket templates for a festival (authenticated, full details)
-router.get('/templates/:festivalId', asyncHandler(async (req, res) => {
+router.get('/templates/:festivalId', requireStaff, asyncHandler(async (req, res) => {
     const { festivalId } = req.params;
 
     const templates = await ticketService.getTicketTemplates(festivalId);

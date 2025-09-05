@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS users (
     last_login DATETIME,
     is_active BOOLEAN DEFAULT 1,
     is_verified BOOLEAN DEFAULT 0,
+    is_admin BOOLEAN DEFAULT 0,
+    is_staff BOOLEAN DEFAULT 0,
+    is_security BOOLEAN DEFAULT 0,
+    role TEXT DEFAULT 'user', -- 'user', 'staff', 'security', 'admin'
     preferences TEXT -- JSON string for user preferences
 );
 

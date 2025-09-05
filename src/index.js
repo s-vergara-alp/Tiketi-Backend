@@ -27,6 +27,14 @@ async function startServer() {
                 await execAsync('node src/database/migrate.js');
                 console.log('Migration completed successfully');
                 
+                console.log('Running mesh network migration...');
+                await execAsync('node src/database/migrate_mesh.js');
+                console.log('Mesh migration completed successfully');
+                
+                console.log('Running role migration...');
+                await execAsync('node src/database/migrate_roles.js');
+                console.log('Role migration completed successfully');
+                
                 console.log('Running database seeding...');
                 await execAsync('node src/database/seed.js');
                 console.log('Seeding completed successfully');

@@ -636,7 +636,9 @@ paths:
   /api/tickets/validate/{qrPayload}:
     post:
       summary: Validar ticket
-      description: Valida un ticket usando su código QR
+      description: Valida un ticket usando su código QR (Requiere privilegios de seguridad)
+      security:
+        - BearerAuth: []
       parameters:
         - name: qrPayload
           in: path
@@ -2907,6 +2909,40 @@ components:
         isActive:
           type: boolean
           example: true
+
+    Widget:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "widget-123"
+        festivalId:
+          type: string
+          example: "festival-123"
+        title:
+          type: string
+          example: "Weather Widget"
+        type:
+          type: string
+          example: "weather"
+        content:
+          type: object
+          example: {"temperature": 25, "condition": "sunny"}
+        orderIndex:
+          type: integer
+          example: 1
+        priority:
+          type: integer
+          example: 5
+        isActive:
+          type: boolean
+          example: true
+        isEnabled:
+          type: boolean
+          example: true
+        customSettings:
+          type: object
+          example: {"theme": "dark", "size": "large"}
 
     Geofence:
       type: object

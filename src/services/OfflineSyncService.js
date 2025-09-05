@@ -39,7 +39,7 @@ class OfflineSyncService extends EventEmitter {
             const queueId = crypto.randomUUID();
             
             await this.db.run(
-                `INSERT INTO offline_sync_queue 
+                `INSERT INTO offline_queue 
                  (id, user_id, identity_id, sync_type, data, priority)
                  VALUES (?, ?, ?, ?, ?, ?)`,
                 [queueId, userId, identityId, syncType, JSON.stringify(data), priority]
@@ -112,7 +112,7 @@ class OfflineSyncService extends EventEmitter {
      */
     async getPendingSyncItems() {
         return await this.db.all(
-            `SELECT * FROM offline_sync_queue 
+            `SELECT * FROM offline_queue 
              WHERE is_processed = 0 AND attempt_count < max_attempts
              ORDER BY priority DESC, created_at ASC
              LIMIT 100`
@@ -384,7 +384,7 @@ class OfflineSyncService extends EventEmitter {
      */
     async markItemProcessed(itemId) {
         await this.db.run(
-            'UPDATE offline_sync_queue SET is_processed = 1, processed_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE offline_queue SET is_processed = 1, processed_at = CURRENT_TIMESTAMP WHERE id = ?',
             [itemId]
         );
     }
@@ -396,7 +396,7 @@ class OfflineSyncService extends EventEmitter {
      */
     async markItemFailed(itemId, errorMessage) {
         await this.db.run(
-            `UPDATE offline_sync_queue 
+            `UPDATE offline_queue 
              SET attempt_count = attempt_count + 1, last_attempt = CURRENT_TIMESTAMP, error_message = ?
              WHERE id = ?`,
             [errorMessage, itemId]
@@ -424,7 +424,7 @@ class OfflineSyncService extends EventEmitter {
                     SUM(CASE WHEN is_processed = 1 THEN 1 ELSE 0 END) as processed_items,
                     SUM(CASE WHEN is_processed = 0 AND attempt_count < max_attempts THEN 1 ELSE 0 END) as pending_items,
                     SUM(CASE WHEN attempt_count >= max_attempts THEN 1 ELSE 0 END) as failed_items
-                 FROM offline_sync_queue ${whereClause}`,
+                 FROM offline_queue ${whereClause}`,
                 params
             );
             
@@ -445,7 +445,7 @@ class OfflineSyncService extends EventEmitter {
     async getSyncQueue(userId, limit = 100, offset = 0) {
         try {
             return await this.db.all(
-                `SELECT * FROM offline_sync_queue 
+                `SELECT * FROM offline_queue 
                  WHERE user_id = ?
                  ORDER BY priority DESC, created_at ASC
                  LIMIT ? OFFSET ?`,
@@ -474,7 +474,7 @@ class OfflineSyncService extends EventEmitter {
             }
             
             const result = await this.db.run(
-                `DELETE FROM offline_sync_queue ${whereClause}`,
+                `DELETE FROM offline_queue ${whereClause}`,
                 params
             );
             
@@ -501,7 +501,7 @@ class OfflineSyncService extends EventEmitter {
             }
             
             const result = await this.db.run(
-                `UPDATE offline_sync_queue 
+                `UPDATE offline_queue 
                  SET attempt_count = 0, error_message = NULL, last_attempt = NULL
                  ${whereClause}`,
                 params

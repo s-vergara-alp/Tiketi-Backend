@@ -124,8 +124,10 @@ function logError(error, context = {}) {
     if (process.env.NODE_ENV === 'development') {
         console.error('Error occurred:', JSON.stringify(logData, null, 2));
     } else {
-        // In production, you might want to log to a file or external service
-        console.error(`[${logData.timestamp}] ${error.name}: ${error.message}`);
+        // In production, only log critical errors to avoid spam
+        if (error.status >= 500 || error.name === 'DatabaseError') {
+            console.error(`[${logData.timestamp}] ${error.name}: ${error.message}`);
+        }
     }
 }
 
