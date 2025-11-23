@@ -1,6 +1,9 @@
 const express = require('express');
-const { asyncHandler, createNotFoundError } = require('../middleware/errorHandler');
+const { body, validationResult } = require('express-validator');
+const { asyncHandler, createNotFoundError, createValidationError } = require('../middleware/errorHandler');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const database = require('../database/database');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
@@ -373,6 +376,40 @@ router.get('/:id/upcoming', asyncHandler(async (req, res) => {
         },
         upcomingPerformances: formattedPerformances,
         count: formattedPerformances.length
+    });
+}));
+
+// Create artist (Admin only)
+router.post('/', authenticateToken, requireAdmin, [
+    body('name').trim().isLength({ min: 1, max: 200 }).withMessage('Name is required and must be less than 200 characters'),
+    body('genre').optional().trim().isLength({ max: 100 }).withMessage('Genre must be less than 100 characters'),
+    body('bio').optional().trim().isLength({ max: 2000 }).withMessage('Bio must be less than 2000 characters'),
+    body('imageUrl').optional().isURL().withMessage('Image URL must be a valid URL'),
+    body('socialMedia').optional().isObject().withMessage('Social media must be an object')
+], asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw createValidationError(errors.array()[0].msg);
+    }
+
+    const { name, bio, genre, imageUrl, socialMedia } = req.body;
+
+    const artistId = uuidv4();
+    const socialMediaJson = socialMedia ? JSON.stringify(socialMedia) : JSON.stringify({});
+
+    await database.run(`
+        INSERT INTO artists (id, name, bio, genre, image_url, social_media)
+        VALUES (?, ?, ?, ?, ?, ?)
+    `, [artistId, name, bio || null, genre || null, imageUrl || null, socialMediaJson]);
+
+    const artist = await database.get('SELECT * FROM artists WHERE id = ?', [artistId]);
+
+    res.status(201).json({
+        message: 'Artist created successfully',
+        artist: {
+            ...artist,
+            social_media: artist.social_media ? JSON.parse(artist.social_media) : {}
+        }
     });
 }));
 

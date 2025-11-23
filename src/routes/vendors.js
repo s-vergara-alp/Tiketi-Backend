@@ -1,6 +1,9 @@
 const express = require('express');
-const { asyncHandler, createNotFoundError } = require('../middleware/errorHandler');
+const { body, validationResult } = require('express-validator');
+const { asyncHandler, createNotFoundError, createValidationError } = require('../middleware/errorHandler');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const database = require('../database/database');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
@@ -362,5 +365,49 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
     return R * c;
 }
+
+// Create vendor (Admin only)
+router.post('/', authenticateToken, requireAdmin, [
+    body('festivalId').trim().isLength({ min: 1 }).withMessage('Festival ID is required'),
+    body('name').trim().isLength({ min: 1, max: 200 }).withMessage('Name is required and must be less than 200 characters'),
+    body('type').isIn(['food', 'drink', 'merch', 'atm', 'restroom', 'charging', 'medical', 'security']).withMessage('Invalid vendor type'),
+    body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Latitude must be between -90 and 90'),
+    body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Longitude must be between -180 and 180'),
+    body('description').optional().trim().isLength({ max: 1000 }).withMessage('Description must be less than 1000 characters'),
+    body('hours').optional().trim().isLength({ max: 100 }).withMessage('Hours must be less than 100 characters'),
+    body('rating').optional().isFloat({ min: 0, max: 5 }).withMessage('Rating must be between 0 and 5'),
+    body('waitTime').optional().isInt({ min: 0 }).withMessage('Wait time must be a non-negative integer')
+], asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw createValidationError(errors.array()[0].msg);
+    }
+
+    const { festivalId, name, type, description, latitude, longitude, hours, rating, waitTime } = req.body;
+
+    const festival = await database.get('SELECT id FROM festivals WHERE id = ?', [festivalId]);
+    if (!festival) {
+        throw createNotFoundError('Festival not found');
+    }
+
+    const vendorId = uuidv4();
+    await database.run(`
+        INSERT INTO vendors (id, festival_id, name, type, description, latitude, longitude, hours, rating, wait_time, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+    `, [vendorId, festivalId, name, type, description || null, latitude, longitude, hours || null, rating || 0, waitTime || 0]);
+
+    const vendor = await database.get('SELECT * FROM vendors WHERE id = ?', [vendorId]);
+
+    res.status(201).json({
+        message: 'Vendor created successfully',
+        vendor: {
+            ...vendor,
+            location: {
+                lat: vendor.latitude,
+                lon: vendor.longitude
+            }
+        }
+    });
+}));
 
 module.exports = router;

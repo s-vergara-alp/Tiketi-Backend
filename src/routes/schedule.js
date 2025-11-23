@@ -1,6 +1,9 @@
 const express = require('express');
-const { asyncHandler, createNotFoundError } = require('../middleware/errorHandler');
+const { body, validationResult } = require('express-validator');
+const { asyncHandler, createNotFoundError, createValidationError } = require('../middleware/errorHandler');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const database = require('../database/database');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
@@ -398,6 +401,55 @@ router.get('/festival/:festivalId/stats', asyncHandler(async (req, res) => {
             stageName: item.stage_name,
             performanceCount: item.performance_count
         }))
+    });
+}));
+
+// Create schedule entry (Admin only)
+router.post('/', authenticateToken, requireAdmin, [
+    body('festivalId').trim().isLength({ min: 1 }).withMessage('Festival ID is required'),
+    body('artistId').trim().isLength({ min: 1 }).withMessage('Artist ID is required'),
+    body('stageId').trim().isLength({ min: 1 }).withMessage('Stage ID is required'),
+    body('startTime').isISO8601().withMessage('Start time must be a valid ISO 8601 date'),
+    body('endTime').isISO8601().withMessage('End time must be a valid ISO 8601 date'),
+    body('title').optional().trim().isLength({ max: 200 }).withMessage('Title must be less than 200 characters')
+], asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw createValidationError(errors.array()[0].msg);
+    }
+
+    const { festivalId, artistId, stageId, title, startTime, endTime } = req.body;
+
+    if (new Date(startTime) >= new Date(endTime)) {
+        throw createValidationError('End time must be after start time');
+    }
+
+    const festival = await database.get('SELECT id FROM festivals WHERE id = ?', [festivalId]);
+    if (!festival) {
+        throw createNotFoundError('Festival not found');
+    }
+
+    const artist = await database.get('SELECT id FROM artists WHERE id = ?', [artistId]);
+    if (!artist) {
+        throw createNotFoundError('Artist not found');
+    }
+
+    const stage = await database.get('SELECT id FROM stages WHERE id = ? AND festival_id = ?', [stageId, festivalId]);
+    if (!stage) {
+        throw createNotFoundError('Stage not found for this festival');
+    }
+
+    const scheduleId = uuidv4();
+    await database.run(`
+        INSERT INTO schedule (id, festival_id, artist_id, stage_id, title, start_time, end_time)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [scheduleId, festivalId, artistId, stageId, title || null, startTime, endTime]);
+
+    const schedule = await database.get('SELECT * FROM schedule WHERE id = ?', [scheduleId]);
+
+    res.status(201).json({
+        message: 'Schedule entry created successfully',
+        schedule
     });
 }));
 

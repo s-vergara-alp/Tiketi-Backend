@@ -1,9 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { asyncHandler, createValidationError, createNotFoundError } = require('../middleware/errorHandler');
-const { requireSecurity, requireStaff } = require('../middleware/auth');
+const { requireSecurity, requireStaff, requireAdmin } = require('../middleware/auth');
 const ticketService = require('../services/TicketService');
 const paymentService = require('../services/PaymentService');
+const database = require('../database/database');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
@@ -96,6 +98,47 @@ router.get('/templates/:festivalId', requireStaff, asyncHandler(async (req, res)
 
     const templates = await ticketService.getTicketTemplates(festivalId);
     res.json(templates);
+}));
+
+// Create ticket template (Admin only)
+router.post('/templates', requireAdmin, [
+    body('festivalId').trim().isLength({ min: 1 }).withMessage('Festival ID is required'),
+    body('name').trim().isLength({ min: 1, max: 200 }).withMessage('Name is required and must be less than 200 characters'),
+    body('price').isFloat({ min: 0 }).withMessage('Price must be a non-negative number'),
+    body('currency').optional().trim().isLength({ min: 3, max: 3 }).withMessage('Currency must be a 3-letter code'),
+    body('description').optional().trim().isLength({ max: 1000 }).withMessage('Description must be less than 1000 characters'),
+    body('benefits').optional().isArray().withMessage('Benefits must be an array'),
+    body('maxQuantity').optional().isInt({ min: 1 }).withMessage('Max quantity must be a positive integer')
+], asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw createValidationError(errors.array()[0].msg);
+    }
+
+    const { festivalId, name, description, price, currency, benefits, maxQuantity } = req.body;
+
+    const festival = await database.get('SELECT id FROM festivals WHERE id = ?', [festivalId]);
+    if (!festival) {
+        throw createNotFoundError('Festival not found');
+    }
+
+    const templateId = uuidv4();
+    const benefitsJson = benefits ? JSON.stringify(benefits) : JSON.stringify([]);
+
+    await database.run(`
+        INSERT INTO ticket_templates (id, festival_id, name, description, price, currency, benefits, max_quantity, is_available)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+    `, [templateId, festivalId, name, description || null, price, currency || 'USD', benefitsJson, maxQuantity || null]);
+
+    const template = await database.get('SELECT * FROM ticket_templates WHERE id = ?', [templateId]);
+
+    res.status(201).json({
+        message: 'Ticket template created successfully',
+        template: {
+            ...template,
+            benefits: template.benefits ? JSON.parse(template.benefits) : []
+        }
+    });
 }));
 
 // Transfer ticket

@@ -1,6 +1,9 @@
 const express = require('express');
+const { body, validationResult } = require('express-validator');
 const { asyncHandler, createNotFoundError, createValidationError } = require('../middleware/errorHandler');
+const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const database = require('../database/database');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
@@ -288,6 +291,99 @@ router.get('/search/:query', asyncHandler(async (req, res) => {
         query,
         festivals: formattedFestivals,
         count: formattedFestivals.length
+    });
+}));
+
+// Create festival (Admin only)
+router.post('/', authenticateToken, requireAdmin, [
+    body('name').trim().isLength({ min: 1, max: 200 }).withMessage('Name is required and must be less than 200 characters'),
+    body('venue').trim().isLength({ min: 1, max: 200 }).withMessage('Venue is required and must be less than 200 characters'),
+    body('startDate').isISO8601().withMessage('Start date must be a valid ISO 8601 date'),
+    body('endDate').isISO8601().withMessage('End date must be a valid ISO 8601 date'),
+    body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Latitude must be between -90 and 90'),
+    body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Longitude must be between -180 and 180'),
+    body('primaryColor').matches(/^#[0-9A-Fa-f]{6}$/).withMessage('Primary color must be a valid hex color'),
+    body('secondaryColor').matches(/^#[0-9A-Fa-f]{6}$/).withMessage('Secondary color must be a valid hex color'),
+    body('accentColor').matches(/^#[0-9A-Fa-f]{6}$/).withMessage('Accent color must be a valid hex color'),
+    body('backgroundColor').matches(/^#[0-9A-Fa-f]{6}$/).withMessage('Background color must be a valid hex color')
+], asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw createValidationError(errors.array()[0].msg);
+    }
+
+    const {
+        name, description, logo, venue, startDate, endDate,
+        latitude, longitude, latitudeDelta, longitudeDelta,
+        primaryColor, secondaryColor, accentColor, backgroundColor,
+        decorationIcons, bleEnabled, biometricEnabled
+    } = req.body;
+
+    if (new Date(startDate) >= new Date(endDate)) {
+        throw createValidationError('End date must be after start date');
+    }
+
+    const festivalId = uuidv4();
+    const decorationIconsJson = decorationIcons ? JSON.stringify(decorationIcons) : JSON.stringify([]);
+
+    await database.run(`
+        INSERT INTO festivals (id, name, description, logo, venue, start_date, end_date,
+                               latitude, longitude, latitude_delta, longitude_delta,
+                               primary_color, secondary_color, accent_color, background_color,
+                               decoration_icons, is_active, ble_enabled, biometric_enabled)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+    `, [
+        festivalId, name, description || null, logo || null, venue,
+        startDate, endDate, latitude, longitude,
+        latitudeDelta || 0.01, longitudeDelta || 0.01,
+        primaryColor, secondaryColor, accentColor, backgroundColor,
+        decorationIconsJson, bleEnabled !== false ? 1 : 0, biometricEnabled !== false ? 1 : 0
+    ]);
+
+    const festival = await database.get(`
+        SELECT * FROM festivals WHERE id = ?
+    `, [festivalId]);
+
+    res.status(201).json({
+        message: 'Festival created successfully',
+        festival: {
+            ...festival,
+            decoration_icons: festival.decoration_icons ? JSON.parse(festival.decoration_icons) : []
+        }
+    });
+}));
+
+// Create stage for festival (Admin only)
+router.post('/:festivalId/stages', authenticateToken, requireAdmin, [
+    body('name').trim().isLength({ min: 1, max: 200 }).withMessage('Name is required and must be less than 200 characters'),
+    body('latitude').isFloat({ min: -90, max: 90 }).withMessage('Latitude must be between -90 and 90'),
+    body('longitude').isFloat({ min: -180, max: 180 }).withMessage('Longitude must be between -180 and 180'),
+    body('capacity').optional().isInt({ min: 1 }).withMessage('Capacity must be a positive integer')
+], asyncHandler(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw createValidationError(errors.array()[0].msg);
+    }
+
+    const { festivalId } = req.params;
+    const { name, description, latitude, longitude, capacity } = req.body;
+
+    const festival = await database.get('SELECT id FROM festivals WHERE id = ?', [festivalId]);
+    if (!festival) {
+        throw createNotFoundError('Festival not found');
+    }
+
+    const stageId = uuidv4();
+    await database.run(`
+        INSERT INTO stages (id, festival_id, name, description, latitude, longitude, capacity)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [stageId, festivalId, name, description || null, latitude, longitude, capacity || null]);
+
+    const stage = await database.get('SELECT * FROM stages WHERE id = ?', [stageId]);
+
+    res.status(201).json({
+        message: 'Stage created successfully',
+        stage
     });
 }));
 

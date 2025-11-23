@@ -1,5 +1,6 @@
 const express = require('express');
-const { asyncHandler, createNotFoundError } = require('../middleware/errorHandler');
+const { asyncHandler, createNotFoundError, createValidationError } = require('../middleware/errorHandler');
+const { authenticateToken } = require('../middleware/auth');
 const database = require('../database/database');
 
 const router = express.Router();
@@ -362,6 +363,33 @@ router.delete('/favorites/:artistId', asyncHandler(async (req, res) => {
 
     res.json({
         message: 'Artist removed from favorites'
+    });
+}));
+
+// Promote user to admin (only if no admins exist - for initial setup)
+router.post('/promote-to-admin', authenticateToken, asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    
+    const adminCount = await database.get('SELECT COUNT(*) as count FROM users WHERE is_admin = 1 OR role = "admin"');
+    
+    if (adminCount.count > 0) {
+        throw createValidationError('Admin users already exist. This endpoint is only for initial setup.');
+    }
+    
+    await database.run(`
+        UPDATE users 
+        SET is_admin = 1, role = 'admin', updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    `, [userId]);
+    
+    const updatedUser = await database.get(
+        'SELECT id, username, email, first_name, last_name, is_admin, role FROM users WHERE id = ?',
+        [userId]
+    );
+    
+    res.json({
+        message: 'User promoted to admin successfully',
+        user: updatedUser
     });
 }));
 
