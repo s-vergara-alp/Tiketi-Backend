@@ -406,9 +406,9 @@ class MeshNetworkService extends EventEmitter {
             const queueId = crypto.randomUUID();
             await this.db.run(
                 `INSERT INTO offline_queue 
-                 (id, user_id, sync_type, data, priority)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [queueId, userId, syncType, JSON.stringify(data), priority]
+                 (id, user_id, type, data)
+                 VALUES (?, ?, ?, ?)`,
+                [queueId, userId, syncType, JSON.stringify(data)]
             );
         } catch (error) {
             console.error('Error queuing for sync:', error);
@@ -504,8 +504,8 @@ class MeshNetworkService extends EventEmitter {
         try {
             const pendingItems = await this.db.all(
                 `SELECT * FROM offline_queue 
-                 WHERE is_processed = 0 AND attempt_count < max_attempts
-                 ORDER BY priority DESC, created_at ASC
+                 WHERE is_processed = 0 AND retries < max_retries
+                 ORDER BY timestamp ASC
                  LIMIT 100`
             );
             
@@ -523,9 +523,9 @@ class MeshNetworkService extends EventEmitter {
                     
                     await this.db.run(
                         `UPDATE offline_queue 
-                         SET attempt_count = attempt_count + 1, last_attempt = CURRENT_TIMESTAMP, error_message = ?
+                         SET retries = retries + 1
                          WHERE id = ?`,
-                        [error.message, item.id]
+                        [item.id]
                     );
                 }
             }
@@ -540,7 +540,7 @@ class MeshNetworkService extends EventEmitter {
     async processSyncItem(item) {
         const data = JSON.parse(item.data);
         
-        switch (item.sync_type) {
+        switch (item.type) {
             case 'message':
                 // Message already synced, just mark as processed
                 break;
