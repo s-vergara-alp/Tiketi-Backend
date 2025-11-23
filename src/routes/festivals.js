@@ -326,19 +326,24 @@ router.post('/', authenticateToken, requireAdmin, [
     const festivalId = uuidv4();
     const decorationIconsJson = decorationIcons ? JSON.stringify(decorationIcons) : JSON.stringify([]);
 
-    await database.run(`
-        INSERT INTO festivals (id, name, description, logo, venue, start_date, end_date,
-                               latitude, longitude, latitude_delta, longitude_delta,
-                               primary_color, secondary_color, accent_color, background_color,
-                               decoration_icons, is_active, ble_enabled, biometric_enabled)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
-    `, [
-        festivalId, name, description || null, logo || null, venue,
-        startDate, endDate, latitude, longitude,
-        latitudeDelta || 0.01, longitudeDelta || 0.01,
-        primaryColor, secondaryColor, accentColor, backgroundColor,
-        decorationIconsJson, bleEnabled !== false ? 1 : 0, biometricEnabled !== false ? 1 : 0
-    ]);
+    try {
+        await database.run(`
+            INSERT INTO festivals (id, name, description, logo, venue, start_date, end_date,
+                                   latitude, longitude, latitude_delta, longitude_delta,
+                                   primary_color, secondary_color, accent_color, background_color,
+                                   decoration_icons, is_active, ble_enabled, biometric_enabled)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            festivalId, name, description || null, logo || null, venue,
+            startDate, endDate, latitude, longitude,
+            latitudeDelta || 0.01, longitudeDelta || 0.01,
+            primaryColor, secondaryColor, accentColor, backgroundColor,
+            decorationIconsJson, 1, bleEnabled !== false ? 1 : 0, biometricEnabled !== false ? 1 : 0
+        ]);
+    } catch (dbError) {
+        console.error('Database error creating festival:', dbError);
+        throw createValidationError(`Failed to create festival: ${dbError.message}`);
+    }
 
     const festival = await database.get(`
         SELECT * FROM festivals WHERE id = ?

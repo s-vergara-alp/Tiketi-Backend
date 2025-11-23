@@ -355,26 +355,39 @@ async function populateDatabase() {
         const createdStages = {};
         const createdTemplates = {};
 
-        console.log('=== STEP 1: Creating Users via API ===\n');
+        console.log('=== STEP 1: Creating/Verifying Users via API ===\n');
         for (const userData of users) {
             const user = await createUser(userData);
             if (user) {
                 createdUsers.push(user);
+            } else {
+                console.log(`⚠️  User ${userData.username} may already exist. Will try to log in...`);
+                createdUsers.push({ ...userData, id: 'temp', email: userData.email });
             }
             await delay(1000);
         }
 
         if (createdUsers.length === 0) {
-            console.log('❌ No users created. Cannot proceed.');
+            console.log('❌ No users available. Cannot proceed.');
             return;
         }
 
 
         console.log('\n=== STEP 2: Logging in Users ===\n');
         for (const user of createdUsers) {
-            const token = await loginUser(user.email, user.password);
-            if (token) {
-                userTokens.push({ user, token });
+            const email = user.email || users.find(u => u.username === user.username)?.email;
+            const password = user.password || users.find(u => u.username === user.username)?.password;
+            
+            if (email && password) {
+                const token = await loginUser(email, password);
+                if (token) {
+                    const userProfile = await makeRequest('GET', '/users/profile', null, token);
+                    if (userProfile.success) {
+                        userTokens.push({ user: { ...user, ...userProfile.data.user }, token });
+                    } else {
+                        userTokens.push({ user, token });
+                    }
+                }
             }
             await delay(1000);
         }
@@ -384,34 +397,43 @@ async function populateDatabase() {
             return;
         }
 
-        console.log('\n=== Promoting First User to Admin ===\n');
-        let adminUser = createdUsers.find(u => u.isAdmin || u.username === 'admin');
-        let adminTokenEntry = userTokens.find(ut => ut.user.id === adminUser?.id || ut.user.username === 'admin');
+        console.log('\n=== Checking and Promoting User to Admin ===\n');
+        let adminUser = null;
+        let adminTokenEntry = null;
         
-        if (!adminTokenEntry && createdUsers.length > 0) {
-            const firstUser = createdUsers[0];
-            const firstToken = userTokens.find(ut => ut.user.id === firstUser.id)?.token;
+        for (const { user, token } of userTokens) {
+            const userCheck = await makeRequest('GET', '/users/profile', null, token);
+            if (userCheck.success) {
+                const userData = userCheck.data.user;
+                console.log(`Checking user ${user.username}: is_admin=${userData?.is_admin}, role=${userData?.role}`);
+                if (userData?.is_admin || userData?.role === 'admin') {
+                    console.log(`✅ Found existing admin user: ${user.username}`);
+                    adminUser = { ...user, ...userData };
+                    adminTokenEntry = { user: adminUser, token };
+                    break;
+                }
+            }
+        }
+        
+        if (!adminTokenEntry && userTokens.length > 0) {
+            const firstUserEntry = userTokens[0];
+            const firstUser = firstUserEntry.user;
+            const firstToken = firstUserEntry.token;
             
-            if (firstToken) {
-                console.log(`Attempting to promote ${firstUser.username} to admin...`);
-                const promoteResult = await makeRequest('POST', '/users/promote-to-admin', {}, firstToken);
-                if (promoteResult.success) {
-                    console.log(`✅ User ${firstUser.username} promoted to admin`);
+            console.log(`No admin found in logged-in users. Attempting to promote ${firstUser.username} to admin via API...`);
+            const promoteResult = await makeRequest('POST', '/users/promote-to-admin', {}, firstToken);
+            if (promoteResult.success) {
+                console.log(`✅ User ${firstUser.username} promoted to admin successfully`);
+                adminUser = firstUser;
+                adminTokenEntry = { user: firstUser, token: firstToken };
+            } else {
+                const errorMsg = promoteResult.error?.message || JSON.stringify(promoteResult.error);
+                console.log(`⚠️  Could not promote user to admin: ${errorMsg}`);
+                if (errorMsg.includes('already exist')) {
+                    console.log(`   An admin user exists but we couldn't identify them.`);
+                    console.log(`   Trying to use the first user's token anyway (may work if they are admin)...`);
                     adminUser = firstUser;
                     adminTokenEntry = { user: firstUser, token: firstToken };
-                } else {
-                    console.log(`⚠️  Could not promote user to admin:`, promoteResult.error);
-                    console.log(`   This might mean an admin already exists. Trying to find existing admin...`);
-                    
-                    for (const { user, token } of userTokens) {
-                        const userCheck = await makeRequest('GET', '/users/profile', null, token);
-                        if (userCheck.success && (userCheck.data.user?.is_admin || userCheck.data.user?.role === 'admin')) {
-                            console.log(`✅ Found existing admin user: ${user.username}`);
-                            adminUser = user;
-                            adminTokenEntry = { user, token };
-                            break;
-                        }
-                    }
                 }
             }
         }
@@ -421,10 +443,11 @@ async function populateDatabase() {
         if (!adminToken) {
             console.log('❌ No admin token available. Cannot create festivals.');
             console.log('   Please ensure an admin user exists and can log in.');
+            console.log('   You may need to manually set a user as admin in the database.');
             return;
         }
 
-        console.log(`✅ Admin user logged in: ${adminUser?.username || adminTokenEntry?.user?.username || 'admin'}\n`);
+        console.log(`✅ Using admin token for: ${adminUser?.username || adminTokenEntry?.user?.username || 'admin'}\n`);
 
         console.log('\n=== STEP 3: Creating Festivals via API ===\n');
         
