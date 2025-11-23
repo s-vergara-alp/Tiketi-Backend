@@ -117,14 +117,14 @@ if (process.env.NODE_ENV !== 'test') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 13. Rate limiting for unauthenticated routes
-app.use('/api/auth', authLimiter);
-app.use('/api/festivals', generalLimiter);
-app.use('/api/widgets', generalLimiter);
-app.use('/api/vendors', generalLimiter);
-app.use('/api/pois', generalLimiter);
-app.use('/api/schedule', generalLimiter);
-app.use('/api/artists', generalLimiter);
+// 13. Rate limiting for unauthenticated routes (DISABLED)
+// app.use('/api/auth', authLimiter);
+// app.use('/api/festivals', generalLimiter);
+// app.use('/api/widgets', generalLimiter);
+// app.use('/api/vendors', generalLimiter);
+// app.use('/api/pois', generalLimiter);
+// app.use('/api/schedule', generalLimiter);
+// app.use('/api/artists', generalLimiter);
 
 // ===== ROUTES =====
 
@@ -153,11 +153,11 @@ app.use('/api/ble', bleRoutes);
 app.use('/api/biometric', biometricRoutes);
 app.use('/api/ticket-validation', ticketValidationRoutes);
 
-// Protected routes with authentication and rate limiting
-app.use('/api/tickets', authenticateToken, generalLimiter, speedLimiter, ticketRoutes);
-app.use('/api/chat', authenticateToken, generalLimiter, speedLimiter, chatRoutes);
-app.use('/api/users', authenticateToken, generalLimiter, speedLimiter, userRoutes);
-app.use('/api/mesh', authenticateToken, generalLimiter, speedLimiter, meshRoutes);
+// Protected routes with authentication and rate limiting (RATE LIMITING DISABLED)
+app.use('/api/tickets', authenticateToken, ticketRoutes);
+app.use('/api/chat', authenticateToken, chatRoutes);
+app.use('/api/users', authenticateToken, userRoutes);
+app.use('/api/mesh', authenticateToken, meshRoutes);
 
 // Serve static files (if any)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
