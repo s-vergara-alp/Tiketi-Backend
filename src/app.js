@@ -40,6 +40,9 @@ const poiRoutes = require('./routes/pois');
 const scheduleRoutes = require('./routes/schedule');
 const artistRoutes = require('./routes/artists');
 const meshRoutes = require('./routes/mesh');
+const bleRoutes = require('./routes/ble');
+const biometricRoutes = require('./routes/biometric');
+const ticketValidationRoutes = require('./routes/ticket-validation');
 
 // Import middleware
 const { authenticateToken } = require('./middleware/auth');
@@ -144,6 +147,11 @@ app.use('/api/vendors', vendorRoutes);
 app.use('/api/pois', poiRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/artists', artistRoutes);
+
+// BLE and biometric routes (public for validation)
+app.use('/api/ble', bleRoutes);
+app.use('/api/biometric', biometricRoutes);
+app.use('/api/ticket-validation', ticketValidationRoutes);
 
 // Protected routes with authentication and rate limiting
 app.use('/api/tickets', authenticateToken, generalLimiter, speedLimiter, ticketRoutes);

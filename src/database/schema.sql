@@ -20,7 +20,136 @@ CREATE TABLE IF NOT EXISTS users (
     is_staff BOOLEAN DEFAULT 0,
     is_security BOOLEAN DEFAULT 0,
     role TEXT DEFAULT 'user', -- 'user', 'staff', 'security', 'admin'
-    preferences TEXT -- JSON string for user preferences
+    preferences TEXT, -- JSON string for user preferences
+    biometric_enrolled BOOLEAN DEFAULT 0,
+    biometric_consent_at DATETIME,
+    biometric_consent_version TEXT
+);
+
+-- Email verification tokens table
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Biometric data table
+CREATE TABLE IF NOT EXISTS biometric_data (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    biometric_type TEXT NOT NULL CHECK (biometric_type IN ('face', 'fingerprint', 'voice', 'iris')),
+    template_data TEXT NOT NULL, -- Encrypted biometric template
+    template_hash TEXT NOT NULL, -- Hash for integrity verification
+    encryption_key_id TEXT NOT NULL, -- Reference to encryption key used
+    quality_score REAL, -- Biometric quality score
+    enrolled_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_used_at DATETIME,
+    is_active BOOLEAN DEFAULT 1,
+    metadata TEXT, -- JSON with additional biometric metadata
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- BLE beacons table
+CREATE TABLE IF NOT EXISTS ble_beacons (
+    id TEXT PRIMARY KEY,
+    festival_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    location_name TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    mac_address TEXT UNIQUE NOT NULL,
+    uuid TEXT NOT NULL,
+    major INTEGER NOT NULL,
+    minor INTEGER NOT NULL,
+    tx_power INTEGER DEFAULT -59,
+    rssi_threshold INTEGER DEFAULT -70,
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (festival_id) REFERENCES festivals(id) ON DELETE CASCADE
+);
+
+-- BLE validation sessions table
+CREATE TABLE IF NOT EXISTS ble_validation_sessions (
+    id TEXT PRIMARY KEY,
+    beacon_id TEXT NOT NULL,
+    user_id TEXT,
+    device_id TEXT,
+    session_token TEXT UNIQUE NOT NULL,
+    status TEXT DEFAULT 'active' CHECK (status IN ('active', 'validated', 'expired', 'cancelled')),
+    proximity_data TEXT, -- JSON with RSSI, distance, etc.
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    validated_at DATETIME,
+    FOREIGN KEY (beacon_id) REFERENCES ble_beacons(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Secure QR codes table
+CREATE TABLE IF NOT EXISTS secure_qr_codes (
+    id TEXT PRIMARY KEY,
+    ticket_id TEXT NOT NULL,
+    qr_payload TEXT UNIQUE NOT NULL,
+    encrypted_data TEXT NOT NULL, -- Encrypted ticket data
+    signature TEXT NOT NULL, -- HMAC signature
+    nonce TEXT NOT NULL, -- Encryption nonce
+    expires_at DATETIME NOT NULL,
+    is_used BOOLEAN DEFAULT 0,
+    used_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE
+);
+
+-- Ticket validations table
+CREATE TABLE IF NOT EXISTS ticket_validations (
+    id TEXT PRIMARY KEY,
+    ticket_id TEXT NOT NULL,
+    qr_payload TEXT UNIQUE NOT NULL,
+    validated_at DATETIME NOT NULL,
+    status TEXT DEFAULT 'used' CHECK (status IN ('used', 'invalid', 'expired', 'duplicate')),
+    validator_id TEXT, -- Security staff who validated
+    beacon_id TEXT, -- BLE beacon used for validation
+    location TEXT, -- Physical location of validation
+    biometric_verified BOOLEAN DEFAULT 0,
+    biometric_confidence REAL, -- Confidence score for biometric match
+    validation_method TEXT CHECK (validation_method IN ('qr_only', 'qr_ble', 'qr_biometric', 'qr_ble_biometric')),
+    device_info TEXT, -- JSON with device information
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES tickets(id) ON DELETE CASCADE,
+    FOREIGN KEY (validator_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (beacon_id) REFERENCES ble_beacons(id) ON DELETE SET NULL
+);
+
+-- Encryption keys table for secure data
+CREATE TABLE IF NOT EXISTS encryption_keys (
+    id TEXT PRIMARY KEY,
+    key_type TEXT NOT NULL CHECK (key_type IN ('qr_encryption', 'biometric_encryption', 'session_encryption')),
+    key_data TEXT NOT NULL, -- Encrypted key data
+    key_version INTEGER NOT NULL,
+    is_active BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    rotated_at DATETIME
+);
+
+-- Biometric verification attempts table
+CREATE TABLE IF NOT EXISTS biometric_verification_attempts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    session_id TEXT,
+    biometric_type TEXT NOT NULL,
+    verification_result TEXT NOT NULL CHECK (verification_result IN ('success', 'failure', 'error')),
+    confidence_score REAL,
+    attempt_data TEXT, -- JSON with attempt metadata
+    ip_address TEXT,
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES ble_validation_sessions(id) ON DELETE SET NULL
 );
 
 -- Festivals table
@@ -43,7 +172,9 @@ CREATE TABLE IF NOT EXISTS festivals (
     decoration_icons TEXT, -- JSON array of emojis
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    is_active BOOLEAN DEFAULT 1
+    is_active BOOLEAN DEFAULT 1,
+    ble_enabled BOOLEAN DEFAULT 1,
+    biometric_enabled BOOLEAN DEFAULT 1
 );
 
 -- Artists table
@@ -158,6 +289,8 @@ CREATE TABLE IF NOT EXISTS tickets (
     seat_info TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    biometric_required BOOLEAN DEFAULT 0,
+    ble_validation_required BOOLEAN DEFAULT 1,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (festival_id) REFERENCES festivals(id) ON DELETE CASCADE,
     FOREIGN KEY (template_id) REFERENCES ticket_templates(id) ON DELETE CASCADE
@@ -372,3 +505,25 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
 CREATE INDEX IF NOT EXISTS idx_offline_queue_user_id ON offline_queue(user_id);
 CREATE INDEX IF NOT EXISTS idx_offline_queue_is_processed ON offline_queue(is_processed);
+
+-- Email verification tokens indexes
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_user_id ON email_verification_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_token ON email_verification_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_email ON email_verification_tokens(email);
+CREATE INDEX IF NOT EXISTS idx_email_verification_tokens_expires_at ON email_verification_tokens(expires_at);
+
+-- BLE and biometric indexes
+CREATE INDEX IF NOT EXISTS idx_biometric_data_user_id ON biometric_data(user_id);
+CREATE INDEX IF NOT EXISTS idx_biometric_data_type ON biometric_data(biometric_type);
+CREATE INDEX IF NOT EXISTS idx_ble_beacons_festival_id ON ble_beacons(festival_id);
+CREATE INDEX IF NOT EXISTS idx_ble_beacons_mac_address ON ble_beacons(mac_address);
+CREATE INDEX IF NOT EXISTS idx_ble_validation_sessions_beacon_id ON ble_validation_sessions(beacon_id);
+CREATE INDEX IF NOT EXISTS idx_ble_validation_sessions_user_id ON ble_validation_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_ble_validation_sessions_status ON ble_validation_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_secure_qr_codes_ticket_id ON secure_qr_codes(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_secure_qr_codes_qr_payload ON secure_qr_codes(qr_payload);
+CREATE INDEX IF NOT EXISTS idx_ticket_validations_ticket_id ON ticket_validations(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_ticket_validations_qr_payload ON ticket_validations(qr_payload);
+CREATE INDEX IF NOT EXISTS idx_ticket_validations_validated_at ON ticket_validations(validated_at);
+CREATE INDEX IF NOT EXISTS idx_biometric_verification_attempts_user_id ON biometric_verification_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_biometric_verification_attempts_session_id ON biometric_verification_attempts(session_id);

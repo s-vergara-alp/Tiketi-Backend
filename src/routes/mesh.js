@@ -3,6 +3,7 @@ const router = express.Router();
 const asyncHandler = require('../utils/errors').asyncHandler;
 const meshNetworkService = require('../services/MeshNetworkService');
 const estadiasService = require('../services/EstadiasService');
+const database = require('../database/database');
 const { body, param, query, validationResult } = require('express-validator');
 const { createValidationError } = require('../utils/errors');
 const { requireStaff, requireSecurity, requireAdmin } = require('../middleware/auth');
@@ -80,6 +81,47 @@ router.post('/messages', [
     }
     const message = await meshNetworkService.storeMeshMessage(req.body);
     res.status(201).json({ success: true, data: message });
+}));
+
+/**
+ * @route GET /api/mesh/identities/by-fingerprint/:fingerprint
+ * @desc Get mesh identity (and user info) by fingerprint.
+ * @access Private (authenticated users only)
+ */
+router.get('/identities/by-fingerprint/:fingerprint', [
+    param('fingerprint').isString().notEmpty().withMessage('Fingerprint is required'),
+], asyncHandler(async (req, res) => {
+    const { fingerprint } = req.params;
+    const identity = await meshNetworkService.getIdentityByFingerprint(fingerprint);
+    if (!identity) {
+        return res.status(404).json({ error: { message: 'Mesh identity not found' } });
+    }
+    
+    // Get user info if available
+    let userInfo = null;
+    if (identity.user_id) {
+        const user = await database.get(
+            'SELECT id, username, first_name, last_name, avatar FROM users WHERE id = ?',
+            [identity.user_id]
+        );
+        if (user) {
+            userInfo = {
+                id: user.id,
+                username: user.username,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                avatar: user.avatar,
+            };
+        }
+    }
+    
+    res.status(200).json({ 
+        success: true, 
+        data: {
+            ...identity,
+            user: userInfo
+        }
+    });
 }));
 
 /**

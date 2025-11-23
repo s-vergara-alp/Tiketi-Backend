@@ -182,9 +182,12 @@ router.get('/nearby/:festivalId', asyncHandler(async (req, res) => {
             u.first_name,
             u.last_name,
             u.avatar,
-            u.username
+            u.username,
+            mi.fingerprint as mesh_fingerprint,
+            mi.nickname as mesh_nickname
         FROM user_presence up
         JOIN users u ON up.user_id = u.id
+        LEFT JOIN mesh_identities mi ON up.user_id = mi.user_id AND mi.festival_id = ? AND mi.is_active = 1
         WHERE up.festival_id = ? 
         AND up.user_id != ?
         AND up.status = 'online'
@@ -194,7 +197,7 @@ router.get('/nearby/:festivalId', asyncHandler(async (req, res) => {
         )
         ORDER BY up.last_seen DESC
         LIMIT 50
-    `, [festivalId, userId, parseFloat(latitude), parseFloat(latitude), parseFloat(longitude), parseFloat(longitude)]);
+    `, [festivalId, festivalId, userId, parseFloat(latitude), parseFloat(latitude), parseFloat(longitude), parseFloat(longitude)]);
 
     // Calculate actual distances and filter by radius
     const usersWithDistance = nearbyUsers
@@ -209,7 +212,9 @@ router.get('/nearby/:festivalId', asyncHandler(async (req, res) => {
                 location: {
                     lat: user.latitude,
                     lon: user.longitude
-                }
+                },
+                meshFingerprint: user.mesh_fingerprint || null,
+                meshNickname: user.mesh_nickname || null
             };
         })
         .filter(user => user.distance <= radius)

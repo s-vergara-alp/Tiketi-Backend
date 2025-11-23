@@ -100,6 +100,22 @@ const requireElevated = (req, res, next) => {
     next();
 };
 
+// Middleware to check if user has specific role(s)
+const requireRole = (allowedRoles) => {
+    return (req, res, next) => {
+        const userRole = req.user.role;
+        const hasRole = allowedRoles.includes(userRole) || 
+                       (allowedRoles.includes('admin') && req.user.is_admin) ||
+                       (allowedRoles.includes('staff') && req.user.is_staff) ||
+                       (allowedRoles.includes('security') && req.user.is_security);
+        
+        if (!hasRole) {
+            return next(new UnauthorizedError(`Access denied. Required roles: ${allowedRoles.join(', ')}`));
+        }
+        next();
+    };
+};
+
 // Generate JWT token
 const generateToken = (userId) => {
     return jwt.sign(
@@ -125,6 +141,7 @@ module.exports = {
     requireStaff,
     requireSecurity,
     requireElevated,
+    requireRole,
     generateToken,
     generateRefreshToken
 };

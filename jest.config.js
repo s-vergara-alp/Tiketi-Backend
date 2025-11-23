@@ -28,6 +28,7 @@ module.exports = {
   ],
   globalTeardown: '<rootDir>/tests/teardown.js',
   testTimeout: 30000,
+  maxWorkers: 1, // Run tests sequentially to avoid rate limiting
   verbose: true,
   clearMocks: true,
   restoreMocks: true,

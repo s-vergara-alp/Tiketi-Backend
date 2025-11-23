@@ -1,0 +1,6268 @@
+type: spec.insomnia.rest/5.0
+name: Tiikii Festival API 1.0.0
+meta:
+  id: wrk_4bc97060409a4f5588c813c462070258
+  created: 1757018901490
+  modified: 1757018901490
+  description: "API completa del servidor Tiikii Festival con todos los endpoints principales y request chaining"
+environment:
+  base_url: "http://localhost:3000"
+  authToken: ""
+  userId: ""
+  festivalId: ""
+  ticketId: ""
+  paymentId: ""
+  meshPeerId: ""
+  messageId: ""
+  estadiaId: ""
+  chatRoomId: ""
+  chatMessageId: ""
+  targetUserId: ""
+  verificationToken: ""
+  newUserId: ""
+  newUserEmail: ""
+collection:
+  - url: "{{ _.base_url }}/health"
+    name: Health Check
+    meta:
+      id: req_6c119b290dfe45568bae1fbf3a49d1ca
+      created: 1757018905180
+      modified: 1757018905180
+      isPrivate: false
+      description: Verifica el estado del servidor
+      sortKey: -1757018905180
+    method: GET
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/auth/login"
+    name: Iniciar sesión
+    meta:
+      id: req_5cf500b4169248f49f2d6f5c8128f4e6
+      created: 1757018905181
+      modified: 1757018905181
+      isPrivate: false
+      description: Autentica un usuario y devuelve un token JWT
+      sortKey: -1757018905181
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "test@example.com",
+          "password": "password123"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: authToken
+            value: "{{ _.response.body.token }}"
+            enabled: true
+          - name: userId
+            value: "{{ _.response.body.user.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/auth/register"
+    name: Registrar usuario
+    meta:
+      id: req_8d6efa7917484b38b8f8877637daeff0
+      created: 1757018905181
+      modified: 1757018905181
+      isPrivate: false
+      description: Crea una nueva cuenta de usuario y envía email de verificación
+      sortKey: -1757018905181
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "username": "testuser",
+          "email": "test@example.com",
+          "password": "password123",
+          "firstName": "Test",
+          "lastName": "User"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: newUserId
+            value: "{{ _.response.body.user.id }}"
+            enabled: true
+          - name: newUserEmail
+            value: "{{ _.response.body.user.email }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/auth/verify-email"
+    name: Verificar email
+    meta:
+      id: req_verify_email_001
+      created: 1757018905182
+      modified: 1757018905182
+      isPrivate: false
+      description: Verifica el email del usuario usando el token de verificación
+      sortKey: -1757018905182
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "token": "{{ _.verificationToken }}"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: authToken
+            value: "{{ _.response.body.token }}"
+            enabled: true
+          - name: userId
+            value: "{{ _.response.body.user.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/auth/resend-verification"
+    name: Reenviar verificación de email
+    meta:
+      id: req_resend_verification_001
+      created: 1757018905182
+      modified: 1757018905182
+      isPrivate: false
+      description: Reenvía el email de verificación a un usuario no verificado
+      sortKey: -1757018905182
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "email": "test@example.com"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/auth/me"
+    name: Obtener perfil del usuario
+    meta:
+      id: req_3e2bc386f78b4f588c715e1b0873e6f8
+      created: 1757018905182
+      modified: 1757018905182
+      isPrivate: false
+      description: Devuelve la información del usuario autenticado
+      sortKey: -1757018905182
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/auth/me"
+    name: Actualizar perfil del usuario
+    meta:
+      id: req_4348d12488d04ab59e3d32ca0818d1a1
+      created: 1757018905182
+      modified: 1757018905182
+      isPrivate: false
+      description: Actualiza la información del perfil del usuario autenticado
+      sortKey: -1757018905182
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "firstName": "John",
+          "lastName": "Doe",
+          "phone": "+1234567890",
+          "avatar": "https://example.com/avatar.jpg",
+          "preferences": {
+            "notifications": true,
+            "theme": "dark"
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/auth/change-password"
+    name: Cambiar contraseña
+    meta:
+      id: req_a017621c50164d72893a3bd61c8135bc
+      created: 1757018905183
+      modified: 1757018905183
+      isPrivate: false
+      description: Cambia la contraseña del usuario autenticado
+      sortKey: -1757018905183
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "currentPassword": "oldpassword123",
+          "newPassword": "newpassword123"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/auth/logout"
+    name: Cerrar sesión
+    meta:
+      id: req_d0bfee92423f449d90b1df71718be4b3
+      created: 1757018905183
+      modified: 1757018905183
+      isPrivate: false
+      description: Cierra la sesión del usuario autenticado
+      sortKey: -1757018905183
+    method: POST
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/festivals"
+    name: Listar festivales
+    meta:
+      id: req_festivals_list_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Obtiene la lista de todos los festivales disponibles
+      sortKey: -1757018905184
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: festivalId
+            value: "{{ _.response.body.festivals[0].id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/festivals"
+    name: Crear festival
+    meta:
+      id: req_festivals_create_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Crea un nuevo festival (requiere autenticación de administrador)
+      sortKey: -1757018905184
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Tiikii Festival 2024",
+          "description": "El mejor festival de música electrónica",
+          "venue": "Parque Central",
+          "startDate": "2024-07-15T10:00:00.000Z",
+          "endDate": "2024-07-17T23:59:59.000Z",
+          "location": {
+            "latitude": 19.4326,
+            "longitude": -99.1332,
+            "address": "Parque Central, Ciudad de México"
+          },
+          "capacity": 50000,
+          "ticketPrice": 1500.00,
+          "currency": "MXN",
+          "isActive": true
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: festivalId
+            value: "{{ _.response.body.festival.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/festivals/{{ _.festivalId }}"
+    name: Obtener festival por ID
+    meta:
+      id: req_festivals_get_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Obtiene los detalles de un festival específico
+      sortKey: -1757018905184
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/festivals/{{ _.festivalId }}"
+    name: Actualizar festival
+    meta:
+      id: req_festivals_update_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Actualiza la información de un festival (requiere autenticación de administrador)
+      sortKey: -1757018905184
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Tiikii Festival 2024 - Actualizado",
+          "description": "El mejor festival de música electrónica - Edición Especial",
+          "capacity": 60000,
+          "ticketPrice": 1800.00
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/festivals/{{ _.festivalId }}"
+    name: Eliminar festival
+    meta:
+      id: req_festivals_delete_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Elimina un festival (requiere autenticación de administrador)
+      sortKey: -1757018905184
+    method: DELETE
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets"
+    name: Listar tickets del usuario
+    meta:
+      id: req_tickets_list_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Obtiene todos los tickets del usuario autenticado
+      sortKey: -1757018905184
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: ticketId
+            value: "{{ _.response.body.tickets[0].id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/tickets/purchase"
+    name: Comprar ticket
+    meta:
+      id: req_tickets_purchase_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Compra un ticket para un festival específico
+      sortKey: -1757018905184
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "festivalId": "{{ _.festivalId }}",
+          "templateId": "general-admission",
+          "holderName": "Juan Pérez",
+          "paymentMethod": {
+            "type": "credit_card",
+            "token": "valid_card_token_123",
+            "last4": "1234"
+          },
+          "quantity": 1
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: ticketId
+            value: "{{ _.response.body.ticket.id }}"
+            enabled: true
+          - name: paymentId
+            value: "{{ _.response.body.payment.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/tickets/{{ _.ticketId }}"
+    name: Obtener ticket por ID
+    meta:
+      id: req_tickets_get_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Obtiene los detalles de un ticket específico
+      sortKey: -1757018905184
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/{{ _.ticketId }}/transfer"
+    name: Transferir ticket
+    meta:
+      id: req_tickets_transfer_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Transfiere un ticket a otro usuario
+      sortKey: -1757018905184
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "newHolderName": "María García",
+          "newHolderEmail": "maria@example.com",
+          "transferReason": "No puedo asistir al festival"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/{{ _.ticketId }}/validate"
+    name: Validar ticket
+    meta:
+      id: req_tickets_validate_001
+      created: 1757018905184
+      modified: 1757018905184
+      isPrivate: false
+      description: Valida un ticket para entrada al festival
+      sortKey: -1757018905184
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "qrCode": "TICKET_QR_CODE_123456789",
+          "validationLocation": "Entrada Principal",
+          "validatorId": "{{ _.userId }}"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/peers"
+    name: Registrar peer de red mesh
+    meta:
+      id: req_mesh_peers_register_001
+      created: 1757018905185
+      modified: 1757018905185
+      isPrivate: false
+      description: Registra un nuevo peer en la red mesh para comunicación offline
+      sortKey: -1757018905185
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "festivalId": "{{ _.festivalId }}",
+          "identityData": {
+            "noisePublicKey": "noise_public_key_123",
+            "signingPublicKey": "signing_public_key_456",
+            "displayName": "Usuario Mesh",
+            "avatar": "https://example.com/avatar.jpg"
+          },
+          "location": {
+            "latitude": 19.4326,
+            "longitude": -99.1332,
+            "accuracy": 10
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: meshPeerId
+            value: "{{ _.response.body.peer.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/mesh/peers"
+    name: Listar peers de red mesh
+    meta:
+      id: req_mesh_peers_list_001
+      created: 1757018905185
+      modified: 1757018905185
+      isPrivate: false
+      description: Obtiene la lista de peers disponibles en la red mesh
+      sortKey: -1757018905185
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/messages"
+    name: Enviar mensaje mesh
+    meta:
+      id: req_mesh_messages_send_001
+      created: 1757018905185
+      modified: 1757018905185
+      isPrivate: false
+      description: Envía un mensaje a través de la red mesh
+      sortKey: -1757018905185
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "recipientId": "{{ _.meshPeerId }}",
+          "messageType": "text",
+          "content": "Hola desde la red mesh!",
+          "metadata": {
+            "priority": "normal",
+            "encrypted": true
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: messageId
+            value: "{{ _.response.body.message.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/mesh/estadias"
+    name: Crear estadía (accommodación)
+    meta:
+      id: req_mesh_estadias_create_001
+      created: 1757018905185
+      modified: 1757018905185
+      isPrivate: false
+      description: Crea una reserva de estadía a través de la red mesh
+      sortKey: -1757018905185
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "festivalId": "{{ _.festivalId }}",
+          "roomId": "room_123",
+          "accessCode": "ACCESS123",
+          "startTime": "2024-07-15T14:00:00.000Z",
+          "endTime": "2024-07-17T12:00:00.000Z",
+          "metadata": {
+            "guestCount": 2,
+            "specialRequests": "Habitación en piso alto"
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: estadiaId
+            value: "{{ _.response.body.estadia.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/chat/rooms"
+    name: Listar salas de chat
+    meta:
+      id: req_chat_rooms_list_001
+      created: 1757018905186
+      modified: 1757018905186
+      isPrivate: false
+      description: Obtiene la lista de salas de chat disponibles
+      sortKey: -1757018905186
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: chatRoomId
+            value: "{{ _.response.body.rooms[0].id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/chat/rooms"
+    name: Crear sala de chat
+    meta:
+      id: req_chat_rooms_create_001
+      created: 1757018905186
+      modified: 1757018905186
+      isPrivate: false
+      description: Crea una nueva sala de chat
+      sortKey: -1757018905186
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Sala General",
+          "description": "Chat general del festival",
+          "festivalId": "{{ _.festivalId }}",
+          "isPublic": true,
+          "maxMembers": 100
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: chatRoomId
+            value: "{{ _.response.body.room.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/chat/rooms/{{ _.chatRoomId }}/messages"
+    name: Enviar mensaje de chat
+    meta:
+      id: req_chat_messages_send_001
+      created: 1757018905186
+      modified: 1757018905186
+      isPrivate: false
+      description: Envía un mensaje a una sala de chat
+      sortKey: -1757018905186
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "content": "¡Hola a todos! ¿Cómo están?",
+          "messageType": "text",
+          "metadata": {
+            "priority": "normal"
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: chatMessageId
+            value: "{{ _.response.body.message.id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/chat/rooms/{{ _.chatRoomId }}/messages"
+    name: Obtener mensajes de chat
+    meta:
+      id: req_chat_messages_get_001
+      created: 1757018905186
+      modified: 1757018905186
+      isPrivate: false
+      description: Obtiene los mensajes de una sala de chat
+      sortKey: -1757018905186
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users"
+    name: Listar usuarios (Admin)
+    meta:
+      id: req_users_list_001
+      created: 1757018905187
+      modified: 1757018905187
+      isPrivate: false
+      description: Obtiene la lista de usuarios (requiere permisos de administrador)
+      sortKey: -1757018905187
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+    plugins:
+      - name: Save Variables
+        disabled: false
+        config:
+          - name: targetUserId
+            value: "{{ _.response.body.users[0].id }}"
+            enabled: true
+  - url: "{{ _.base_url }}/api/users/{{ _.targetUserId }}"
+    name: Obtener usuario por ID
+    meta:
+      id: req_users_get_001
+      created: 1757018905187
+      modified: 1757018905187
+      isPrivate: false
+      description: Obtiene los detalles de un usuario específico
+      sortKey: -1757018905187
+    method: GET
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.authToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/festivals/{{ _.id }}/stats"
+    name: Estadísticas del festival
+    meta:
+      id: req_4395458db28b41abb20f9c6bd54cc57d
+      created: 1757018905185
+      modified: 1757018905185
+      isPrivate: false
+      description: Obtiene estadísticas detalladas de un festival
+      sortKey: -1757018905185
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/festivals/{{ _.id }}/tickets-preview"
+    name: Vista previa de tickets del festival
+    meta:
+      id: req_7c9a58cdf69d4a389170021bc53372f2
+      created: 1757018905185
+      modified: 1757018905185
+      isPrivate: false
+      description: Obtiene una vista previa pública de los tickets disponibles para un
+        festival
+      sortKey: -1757018905185
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/festivals/{{ _.id }}/map"
+    name: Datos del mapa del festival
+    meta:
+      id: req_0c8a2e8c1f8f49c9af9744fb29725419
+      created: 1757018905186
+      modified: 1757018905186
+      isPrivate: false
+      description: Obtiene todos los datos relacionados con el mapa del festival
+      sortKey: -1757018905186
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/festivals/search/{{ _.query }}"
+    name: Buscar festivales
+    meta:
+      id: req_d1f3a17c27b94752a7653678e4184dbc
+      created: 1757018905186
+      modified: 1757018905186
+      isPrivate: false
+      description: Busca festivales por nombre, descripción o venue
+      sortKey: -1757018905186
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/{{ _.id }}"
+    name: Obtener ticket por ID
+    meta:
+      id: req_27a9fa7e4f094b3d90d7a10c231d12d0
+      created: 1757018905187
+      modified: 1757018905187
+      isPrivate: false
+      description: Obtiene un ticket específico del usuario autenticado
+      sortKey: -1757018905187
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets"
+    name: Obtener tickets del usuario
+    meta:
+      id: req_50c3d3ccbe654eae8dbdb809b8d80ea5
+      created: 1757018905187
+      modified: 1757018905187
+      isPrivate: false
+      description: Lista todos los tickets del usuario autenticado
+      sortKey: -1757018905187
+    method: GET
+    parameters:
+      - name: status
+        disabled: true
+        value: string
+      - name: festivalId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/{{ _.id }}"
+    name: Transferir ticket
+    meta:
+      id: req_465232242310423d903969ace2b8f005
+      created: 1757018905188
+      modified: 1757018905188
+      isPrivate: false
+      description: Transfiere un ticket a otro titular
+      sortKey: -1757018905188
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "newHolderName": "Jane Doe"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/{{ _.id }}/transfer"
+    name: Transferir ticket (alternativo)
+    meta:
+      id: req_da54860fef714720861a0705090ad6b4
+      created: 1757018905188
+      modified: 1757018905188
+      isPrivate: false
+      description: Transfiere un ticket a otro titular usando endpoint alternativo
+      sortKey: -1757018905188
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "newHolderName": "Jane Doe"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/{{ _.id }}/cancel"
+    name: Cancelar ticket
+    meta:
+      id: req_dc557cafe48949b780e8ccce66c250b5
+      created: 1757018905189
+      modified: 1757018905189
+      isPrivate: false
+      description: Cancela un ticket
+      sortKey: -1757018905189
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "reason": "Change of plans"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/purchase"
+    name: Comprar ticket
+    meta:
+      id: req_06e906dd22704b238405e4f4a7639422
+      created: 1757018905190
+      modified: 1757018905190
+      isPrivate: false
+      description: Procesa la compra de un ticket
+      sortKey: -1757018905190
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "festivalId": "festival-123",
+          "templateId": "template-456",
+          "holderName": "John Doe",
+          "paymentMethod": {
+            "type": "card",
+            "token": "tok_test_123"
+          },
+          "amount": 99.99,
+          "currency": "USD",
+          "seatInfo": {
+            "section": "A",
+            "row": "1",
+            "seat": "5"
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/validate/{{ _.qrPayload }}"
+    name: Validar ticket
+    meta:
+      id: req_8ba0a36493354f808dc4b7ae0ab9950d
+      created: 1757018905190
+      modified: 1757018905190
+      isPrivate: false
+      description: Valida un ticket usando su código QR
+      sortKey: -1757018905190
+    method: POST
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/templates/{{ _.festivalId }}"
+    name: Obtener plantillas de tickets
+    meta:
+      id: req_208c2839b68043db8f002b087b227bd6
+      created: 1757018905191
+      modified: 1757018905191
+      isPrivate: false
+      description: Lista las plantillas de tickets disponibles para un festival
+      sortKey: -1757018905191
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/payments/history"
+    name: Historial de pagos
+    meta:
+      id: req_b23708e37d60488387bd876dcb977ac2
+      created: 1757018905191
+      modified: 1757018905191
+      isPrivate: false
+      description: Obtiene el historial de pagos del usuario
+      sortKey: -1757018905191
+    method: GET
+    parameters:
+      - name: status
+        disabled: true
+        value: string
+      - name: festivalId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/payments/{{ _.paymentId }}"
+    name: Obtener pago por ID
+    meta:
+      id: req_ee409cfd32bd415ba20ca68de6ef1dd1
+      created: 1757018905192
+      modified: 1757018905192
+      isPrivate: false
+      description: Obtiene los detalles de un pago específico
+      sortKey: -1757018905192
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/payments/{{ _.paymentId }}/refund"
+    name: Reembolsar pago (alternativo)
+    meta:
+      id: req_52918705f372499e908eb32a04dde1e8
+      created: 1757018905193
+      modified: 1757018905193
+      isPrivate: false
+      description: Procesa un reembolso para un pago usando endpoint alternativo
+      sortKey: -1757018905193
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "amount": 150,
+          "reason": "Customer request"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/tickets/payments/{{ _.paymentId }}"
+    name: Reembolsar pago
+    meta:
+      id: req_f78541cb43c04627a324e20ded42fbf4
+      created: 1757018905193
+      modified: 1757018905193
+      isPrivate: false
+      description: Procesa un reembolso para un pago
+      sortKey: -1757018905193
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "amount": 150,
+          "reason": "Customer request"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/peers"
+    name: Registrar/actualizar peer
+    meta:
+      id: req_9e6a6c93828f416a926df51b0a4d0259
+      created: 1757018905194
+      modified: 1757018905194
+      isPrivate: false
+      description: Registra un nuevo peer o actualiza uno existente
+      sortKey: -1757018905194
+    method: POST
+    body:
+      mimeType: application/json
+      text: >-
+        {
+          "id": "test-peer-001",
+          "noise_public_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "signing_public_key": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+          "nickname": "TestPeer001",
+          "is_connected": true,
+          "is_reachable": true,
+          "metadata": {
+            "deviceType": "mobile",
+            "appVersion": "1.0.0"
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/peers"
+    name: Obtener peers de mesh network
+    meta:
+      id: req_d494f5fba195401ea0e52b3cfebc23a3
+      created: 1757018905194
+      modified: 1757018905194
+      isPrivate: false
+      description: Lista todos los peers conectados en la red mesh
+      sortKey: -1757018905194
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/messages"
+    name: Enviar mensaje mesh
+    meta:
+      id: req_a474676cbc984df68afb6fccb0c9bb51
+      created: 1757018905195
+      modified: 1757018905195
+      isPrivate: false
+      description: Envía un mensaje a través de la red mesh
+      sortKey: -1757018905195
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "sender_id": "test-peer-001",
+          "content": "Test message from mesh network",
+          "recipient_id": "test-peer-002",
+          "is_private": true,
+          "is_encrypted": true,
+          "delivery_status": "sent",
+          "metadata": {
+            "messageType": "text",
+            "timestamp": 1640995200000
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/peers/{{ _.id }}"
+    name: Obtener peer por ID
+    meta:
+      id: req_bd75f14a89444482867141330a6e061b
+      created: 1757018905195
+      modified: 1757018905195
+      isPrivate: false
+      description: Devuelve la información de un peer específico
+      sortKey: -1757018905195
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/messages/{{ _.peerId }}"
+    name: Obtener mensajes de un peer
+    meta:
+      id: req_79308a4384e44ebeb2747c0bbdaca812
+      created: 1757018905196
+      modified: 1757018905196
+      isPrivate: false
+      description: Lista los mensajes de un peer específico
+      sortKey: -1757018905196
+    method: GET
+    parameters:
+      - name: limit
+        disabled: true
+        value: "50"
+      - name: offset
+        disabled: true
+        value: "0"
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/messages/{{ _.id }}/status"
+    name: Actualizar estado de mensaje mesh
+    meta:
+      id: req_e5b0cb795b25451b8fe713f76f70a4a1
+      created: 1757018905196
+      modified: 1757018905196
+      isPrivate: false
+      description: Actualiza el estado de entrega de un mensaje mesh
+      sortKey: -1757018905196
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "status": "delivered"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/estadias/{{ _.id }}"
+    name: Obtener estadía por ID
+    meta:
+      id: req_196701bb022244f695be7ebad3123800
+      created: 1757018905197
+      modified: 1757018905197
+      isPrivate: false
+      description: Devuelve la información de una estadía específica
+      sortKey: -1757018905197
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/estadias"
+    name: Crear estadía
+    meta:
+      id: req_ff7c0517c8bb469081a2b2af056cd8e4
+      created: 1757018905197
+      modified: 1757018905197
+      isPrivate: false
+      description: Crea una nueva estadía en el sistema mesh
+      sortKey: -1757018905197
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "user_id": "user-123",
+          "festival_id": "festival-123",
+          "room_id": "room-123",
+          "access_code": "TEST-ACCESS-001",
+          "start_time": "2024-07-15T18:00:00.000Z",
+          "end_time": "2024-07-17T06:00:00.000Z",
+          "metadata": {
+            "guest_count": 2,
+            "special_requests": "Late checkout requested",
+            "amenities": [
+              "wifi",
+              "breakfast"
+            ]
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/estadias/{{ _.id }}"
+    name: Actualizar estado de estadía
+    meta:
+      id: req_295bff178fb549fd9a2840c3bc4ef911
+      created: 1757018905198
+      modified: 1757018905198
+      isPrivate: false
+      description: Actualiza el estado de una estadía
+      sortKey: -1757018905198
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "status": "checked_in"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/estadias/user/{{ _.userId }}"
+    name: Obtener estadías de usuario
+    meta:
+      id: req_3ec807ecfa4a414a97c284ab8cc53fcc
+      created: 1757018905199
+      modified: 1757018905199
+      isPrivate: false
+      description: Lista todas las estadías de un usuario
+      sortKey: -1757018905199
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/estadias/{{ _.id }}/status"
+    name: Actualizar estado de estadía (alternativo)
+    meta:
+      id: req_48f4847807164166883eceb6743f12b9
+      created: 1757018905199
+      modified: 1757018905199
+      isPrivate: false
+      description: Actualiza el estado de una estadía usando endpoint alternativo
+      sortKey: -1757018905199
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "status": "checked_in"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/mesh/estadias/access/validate"
+    name: Validar acceso a estadía
+    meta:
+      id: req_3e52640d985f4170b0a1ed2ae1b41c9f
+      created: 1757018905200
+      modified: 1757018905200
+      isPrivate: false
+      description: Valida el acceso a una estadía usando código de acceso
+      sortKey: -1757018905200
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "access_code": "VALID-ACCESS-001",
+          "room_id": "room-123",
+          "user_id": "user-123"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/chat/rooms"
+    name: Obtener salas de chat del usuario
+    meta:
+      id: req_b3fc698e17404c379ba6bd055ce81967
+      created: 1757018905200
+      modified: 1757018905200
+      isPrivate: false
+      description: Lista todas las salas de chat del usuario autenticado
+      sortKey: -1757018905200
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/chat/rooms/{{ _.roomId }}/messages"
+    name: Obtener mensajes de sala
+    meta:
+      id: req_69c9b3feb4f3468a955de9344fee8865
+      created: 1757018905201
+      modified: 1757018905201
+      isPrivate: false
+      description: Obtiene todos los mensajes de una sala de chat
+      sortKey: -1757018905201
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/chat/rooms"
+    name: Crear sala de chat privada
+    meta:
+      id: req_bea82fc332a84404b6a9e8acb9abc83c
+      created: 1757018905201
+      modified: 1757018905201
+      isPrivate: false
+      description: Crea una nueva sala de chat privada con otro usuario
+      sortKey: -1757018905201
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "participantId": "user-456",
+          "festivalId": "festival-123"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/chat/rooms/{{ _.roomId }}/read"
+    name: Marcar mensajes como leídos
+    meta:
+      id: req_346cf2d5cd9545c0822a6715e3866168
+      created: 1757018905202
+      modified: 1757018905202
+      isPrivate: false
+      description: Marca todos los mensajes de una sala como leídos
+      sortKey: -1757018905202
+    method: PUT
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/chat/rooms/{{ _.roomId }}/messages"
+    name: Enviar mensaje
+    meta:
+      id: req_bb6391a905bd472b997f78e14bfc4b7e
+      created: 1757018905202
+      modified: 1757018905202
+      isPrivate: false
+      description: Envía un mensaje a una sala de chat
+      sortKey: -1757018905202
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "text": "Hello everyone!"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/chat/messages/{{ _.messageId }}"
+    name: Eliminar mensaje
+    meta:
+      id: req_587addcdb0b1406db2a78aea0d7e4fe5
+      created: 1757018905203
+      modified: 1757018905203
+      isPrivate: false
+      description: Elimina un mensaje (eliminación suave)
+      sortKey: -1757018905203
+    method: DELETE
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/chat/messages/{{ _.messageId }}"
+    name: Editar mensaje
+    meta:
+      id: req_5c81dc2c1d5a4cb68987f7f78335ef1d
+      created: 1757018905203
+      modified: 1757018905203
+      isPrivate: false
+      description: Edita un mensaje existente
+      sortKey: -1757018905203
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "text": "Updated message text"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/profile"
+    name: Obtener perfil de usuario
+    meta:
+      id: req_43314ace10e7497e9bbf465ec6982261
+      created: 1757018905204
+      modified: 1757018905204
+      isPrivate: false
+      description: Obtiene el perfil completo del usuario autenticado
+      sortKey: -1757018905204
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/activity"
+    name: Obtener actividad del usuario
+    meta:
+      id: req_d829c787d0824171b33612d8079344c9
+      created: 1757018905204
+      modified: 1757018905204
+      isPrivate: false
+      description: Obtiene la actividad reciente del usuario (tickets, chat, favoritos)
+      sortKey: -1757018905204
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/presence/{{ _.festivalId }}"
+    name: Obtener presencia del usuario
+    meta:
+      id: req_69bb2aa2802941d98847bd4c776b1cfd
+      created: 1757018905205
+      modified: 1757018905205
+      isPrivate: false
+      description: Obtiene la información de presencia del usuario en un festival
+      sortKey: -1757018905205
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/presence/{{ _.festivalId }}"
+    name: Actualizar presencia del usuario
+    meta:
+      id: req_c0ca8567dfa94d749301d79c4063023e
+      created: 1757018905205
+      modified: 1757018905205
+      isPrivate: false
+      description: Actualiza la información de presencia del usuario en un festival
+      sortKey: -1757018905205
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "latitude": 40.7128,
+          "longitude": -74.006,
+          "status": "online"
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/nearby/{{ _.festivalId }}"
+    name: Obtener usuarios cercanos
+    meta:
+      id: req_a210186be38f4b76a8db7d59b8042ebf
+      created: 1757018905206
+      modified: 1757018905206
+      isPrivate: false
+      description: Obtiene usuarios cercanos en un festival
+      sortKey: -1757018905206
+    method: GET
+    parameters:
+      - name: latitude
+        disabled: false
+        value: "0"
+      - name: longitude
+        disabled: false
+        value: "0"
+      - name: radius
+        disabled: true
+        value: "1000"
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/notifications/{{ _.id }}/read"
+    name: Marcar notificación como leída
+    meta:
+      id: req_dd1c5294304647fb956c3245c3cbd4b4
+      created: 1757018905207
+      modified: 1757018905207
+      isPrivate: false
+      description: Marca una notificación específica como leída
+      sortKey: -1757018905207
+    method: PUT
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/notifications"
+    name: Obtener notificaciones del usuario
+    meta:
+      id: req_ee14f6d827624ae2a7610db5de39d6a8
+      created: 1757018905207
+      modified: 1757018905207
+      isPrivate: false
+      description: Obtiene las notificaciones del usuario
+      sortKey: -1757018905207
+    method: GET
+    parameters:
+      - name: limit
+        disabled: true
+        value: "20"
+      - name: offset
+        disabled: true
+        value: "0"
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/notifications/read-all"
+    name: Marcar todas las notificaciones como leídas
+    meta:
+      id: req_3eeefd6d8b934d2f883255d9ee3458c7
+      created: 1757018905208
+      modified: 1757018905208
+      isPrivate: false
+      description: Marca todas las notificaciones del usuario como leídas
+      sortKey: -1757018905208
+    method: PUT
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/favorites"
+    name: Obtener favoritos del usuario
+    meta:
+      id: req_3f1c2b7a6beb465a90cc8c49ba813d65
+      created: 1757018905208
+      modified: 1757018905208
+      isPrivate: false
+      description: Obtiene los artistas favoritos del usuario
+      sortKey: -1757018905208
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/favorites/{{ _.artistId }}"
+    name: Remover artista de favoritos
+    meta:
+      id: req_a2c76bbab52e4a10b29db55185e41354
+      created: 1757018905209
+      modified: 1757018905209
+      isPrivate: false
+      description: Remueve un artista de los favoritos del usuario
+      sortKey: -1757018905209
+    method: DELETE
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/users/favorites/{{ _.artistId }}"
+    name: Agregar artista a favoritos
+    meta:
+      id: req_d3b7c26458be404e91440d1c621ba25a
+      created: 1757018905209
+      modified: 1757018905209
+      isPrivate: false
+      description: Agrega un artista a los favoritos del usuario
+      sortKey: -1757018905209
+    method: POST
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/artists"
+    name: Obtener todos los artistas
+    meta:
+      id: req_1e0dc79373b64ead8bff7a517c4129c3
+      created: 1757018905210
+      modified: 1757018905210
+      isPrivate: false
+      description: Lista todos los artistas con filtros opcionales
+      sortKey: -1757018905210
+    method: GET
+    parameters:
+      - name: genre
+        disabled: true
+        value: string
+      - name: festivalId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/artists/{{ _.id }}"
+    name: Obtener artista por ID
+    meta:
+      id: req_a0c2850e432d4512a34044999ff23ad7
+      created: 1757018905210
+      modified: 1757018905210
+      isPrivate: false
+      description: Obtiene información detallada de un artista específico
+      sortKey: -1757018905210
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/artists/genre/{{ _.genre }}"
+    name: Obtener artistas por género
+    meta:
+      id: req_b62733b6183e40fcb50ef3c4d89b62e6
+      created: 1757018905211
+      modified: 1757018905211
+      isPrivate: false
+      description: Lista artistas filtrados por género
+      sortKey: -1757018905211
+    method: GET
+    parameters:
+      - name: festivalId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/artists/festival/{{ _.festivalId }}"
+    name: Obtener artistas de festival
+    meta:
+      id: req_33757c24f98e4d1d9ff414f0a86423a3
+      created: 1757018905212
+      modified: 1757018905212
+      isPrivate: false
+      description: Lista todos los artistas de un festival específico
+      sortKey: -1757018905212
+    method: GET
+    parameters:
+      - name: genre
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/artists/search/{{ _.query }}"
+    name: Buscar artistas
+    meta:
+      id: req_f1fde21eb31b402598744df82653df1a
+      created: 1757018905212
+      modified: 1757018905212
+      isPrivate: false
+      description: Busca artistas por nombre, biografía o género
+      sortKey: -1757018905212
+    method: GET
+    parameters:
+      - name: festivalId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/artists/stats/overview"
+    name: Estadísticas de artistas
+    meta:
+      id: req_bd7b35e6d61d4bcb96a21ece4e5e6070
+      created: 1757018905213
+      modified: 1757018905213
+      isPrivate: false
+      description: Obtiene estadísticas generales de artistas
+      sortKey: -1757018905213
+    method: GET
+    parameters:
+      - name: festivalId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/artists/popular"
+    name: Obtener artistas populares
+    meta:
+      id: req_2c3f201abc8841c59973e436434677f8
+      created: 1757018905214
+      modified: 1757018905214
+      isPrivate: false
+      description: Lista los artistas más populares por número de presentaciones
+      sortKey: -1757018905214
+    method: GET
+    parameters:
+      - name: festivalId
+        disabled: true
+        value: string
+      - name: limit
+        disabled: true
+        value: "10"
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/artists/{{ _.id }}/upcoming"
+    name: Obtener presentaciones próximas del artista
+    meta:
+      id: req_9167ed6dfe3b4319b8f149cd1329b2f2
+      created: 1757018905214
+      modified: 1757018905214
+      isPrivate: false
+      description: Lista las próximas presentaciones de un artista
+      sortKey: -1757018905214
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/pois/festival/{{ _.festivalId }}"
+    name: Obtener POIs de festival
+    meta:
+      id: req_272f22c0d7a34688bceb9a9aa40c34b5
+      created: 1757018905215
+      modified: 1757018905215
+      isPrivate: false
+      description: Lista todos los puntos de interés de un festival
+      sortKey: -1757018905215
+    method: GET
+    parameters:
+      - name: kind
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/pois/{{ _.id }}"
+    name: Obtener POI por ID
+    meta:
+      id: req_b8b9d75363894817ad185e293113808d
+      created: 1757018905215
+      modified: 1757018905215
+      isPrivate: false
+      description: Devuelve la información detallada de un punto de interés
+      sortKey: -1757018905215
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/schedule/festival/{{ _.festivalId }}"
+    name: Obtener programación del festival
+    meta:
+      id: req_bf45e7c5c2dd4243a520e20745847c13
+      created: 1757018905216
+      modified: 1757018905216
+      isPrivate: false
+      description: Lista toda la programación de un festival
+      sortKey: -1757018905216
+    method: GET
+    parameters:
+      - name: date
+        disabled: true
+        value: string
+      - name: stageId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/pois/festival/{{ _.festivalId }}/nearby"
+    name: Obtener POIs cercanos
+    meta:
+      id: req_fcd90cf3735a49a7813d7a15658166e9
+      created: 1757018905216
+      modified: 1757018905216
+      isPrivate: false
+      description: Encuentra puntos de interés cercanos a una ubicación
+      sortKey: -1757018905216
+    method: GET
+    parameters:
+      - name: latitude
+        disabled: false
+        value: "0"
+      - name: longitude
+        disabled: false
+        value: "0"
+      - name: radius
+        disabled: true
+        value: "1000"
+      - name: kind
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/schedule/festival/{{ _.festivalId }}/now"
+    name: Obtener actuaciones actuales y próximas
+    meta:
+      id: req_2ce57600bc1144318c5f812049666b46
+      created: 1757018905217
+      modified: 1757018905217
+      isPrivate: false
+      description: Devuelve las actuaciones que están ocurriendo ahora y las próximas
+      sortKey: -1757018905217
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/vendors/festival/{{ _.festivalId }}"
+    name: Obtener vendedores del festival
+    meta:
+      id: req_2eb85dbe2c8e4fd5b348d6bf8fadfa9e
+      created: 1757018905217
+      modified: 1757018905217
+      isPrivate: false
+      description: Lista todos los vendedores de un festival
+      sortKey: -1757018905217
+    method: GET
+    parameters:
+      - name: type
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/vendors/{{ _.id }}/wait-time"
+    name: Actualizar tiempo de espera
+    meta:
+      id: req_92e73014de9b4578ad3561863d8b4145
+      created: 1757018905218
+      modified: 1757018905218
+      isPrivate: false
+      description: Actualiza el tiempo de espera de un vendedor
+      sortKey: -1757018905218
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "waitTime": 15
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/vendors/{{ _.id }}"
+    name: Obtener vendedor por ID
+    meta:
+      id: req_af63e6624233459a990ba34fd8cef046
+      created: 1757018905218
+      modified: 1757018905218
+      isPrivate: false
+      description: Devuelve la información detallada de un vendedor
+      sortKey: -1757018905218
+    method: GET
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/widgets/{{ _.id }}"
+    name: Obtener widget por ID
+    meta:
+      id: req_3514573d99ae434c82fc1de3b6a7aecf
+      created: 1757018905219
+      modified: 1757018905219
+      isPrivate: false
+      description: Devuelve la información detallada de un widget
+      sortKey: -1757018905219
+    method: GET
+    parameters:
+      - name: userId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/widgets/festival/{{ _.festivalId }}"
+    name: Obtener widgets del festival
+    meta:
+      id: req_8832b12066b64910a2f9830c07c20d31
+      created: 1757018905219
+      modified: 1757018905219
+      isPrivate: false
+      description: Lista todos los widgets disponibles para un festival
+      sortKey: -1757018905219
+    method: GET
+    parameters:
+      - name: userId
+        disabled: true
+        value: string
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.base_url }}/api/widgets/{{ _.id }}/preferences"
+    name: Actualizar preferencias de widget
+    meta:
+      id: req_db200a7f7e7541dca18560c1010cb925
+      created: 1757018905220
+      modified: 1757018905220
+      isPrivate: false
+      description: Actualiza las preferencias del usuario para un widget específico
+      sortKey: -1757018905220
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "isEnabled": true,
+          "orderIndex": 1,
+          "customSettings": {
+            "theme": "dark",
+            "size": "large"
+          }
+        }
+    headers:
+      - name: Content-Type
+        disabled: false
+        value: application/json
+    authentication:
+      type: bearer
+      token: "{{ _.bearerToken }}"
+      prefix: ""
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_8caf851ebe97c157ef2ade168f5f224ee8cdee49
+    created: 1757018902229
+    modified: 1757018902229
+environments:
+  name: Base Environment
+  meta:
+    id: env_8caf851ebe97c157ef2ade168f5f224ee8cdee49
+    created: 1757018901495
+    modified: 1757018905178
+    isPrivate: false
+  data:
+    base_url: "{{ _.scheme }}://{{ _.host }}{{ _.base_path }}"
+  subEnvironments:
+    - name: OpenAPI env localhost:3000
+      meta:
+        id: env_35809027c71241c58cb114534538ae34
+        created: 1757018905179
+        modified: 1757018944362
+        isPrivate: false
+        sortKey: 1757018905179
+      data:
+        scheme: http
+        base_path: ""
+        host: localhost:3000
+        bearerToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkMTA2NGUwMC1mODQ4LTRlMTktODM3OC04MzlkZTM4MDA2ZDQiLCJpYXQiOjE3NTcwMTg5MjAsImV4cCI6MTc1NzYyMzcyMH0.4WgLwYRYw3nvC1-JWR1U2xR-Fcf_2dVWkLZRpk6tMX8
+    - name: https://tiketi-backend.onrender.com/
+      meta:
+        id: env_9e09da3318d04a4bb30a612273a7ed72
+        created: 1757018905179
+        modified: 1757019031409
+        isPrivate: false
+        sortKey: 1757018905179
+      data:
+        scheme: https
+        base_path: ""
+        host: tiketi-backend.onrender.com
+        bearerToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJkNzI3ZDQ3Yy03NjUyLTQ5Y2MtODM4Yy1hMTRkZTM1YmZhNzUiLCJpYXQiOjE3NTcwMTkwMTAsImV4cCI6MTc1NzYyMzgxMH0.nxMuBvU3kdYfHZSTZNVDz1stk6kBOx8PAGOZzFvCbpM
+spec:
+  contents:
+    openapi: 3.0.3
+    info:
+      title: Tiikii Festival API
+      description: API para el sistema de festivales Tiikii con funcionalidades de
+        tickets, chat, mesh network y más
+      version: 1.0.0
+      contact:
+        name: Tiikii Development Team
+        email: dev@tiikii.com
+    servers:
+      - url: http://localhost:3000
+        description: Servidor de desarrollo
+      - url: https://api.tiikii.com
+        description: Servidor de producción
+    paths:
+      /health:
+        get:
+          summary: Health Check
+          description: Verifica el estado del servidor
+          responses:
+            "200":
+              description: Servidor funcionando correctamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: OK
+                      timestamp:
+                        type: string
+                        format: date-time
+                      uptime:
+                        type: number
+                      environment:
+                        type: string
+                        example: development
+      /api/auth/register:
+        post:
+          summary: Registrar usuario
+          description: Crea una nueva cuenta de usuario
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - username
+                    - email
+                    - password
+                    - firstName
+                    - lastName
+                  properties:
+                    username:
+                      type: string
+                      example: testuser
+                    email:
+                      type: string
+                      format: email
+                      example: test@example.com
+                    password:
+                      type: string
+                      minLength: 6
+                      example: password123
+                    firstName:
+                      type: string
+                      example: Test
+                    lastName:
+                      type: string
+                      example: User
+          responses:
+            "201":
+              description: Usuario registrado exitosamente
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/SuccessResponse"
+            "400":
+              $ref: "#/components/responses/ValidationError"
+      /api/auth/login:
+        post:
+          summary: Iniciar sesión
+          description: Autentica un usuario y devuelve un token
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - email
+                    - password
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      example: test@example.com
+                    password:
+                      type: string
+                      example: password123
+          responses:
+            "200":
+              description: Login exitoso
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Login successful
+                      user:
+                        $ref: "#/components/schemas/User"
+                      token:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+            "400":
+              $ref: "#/components/responses/ValidationError"
+      /api/auth/me:
+        get:
+          summary: Obtener perfil del usuario
+          description: Devuelve la información del usuario autenticado
+          responses:
+            "200":
+              description: Perfil del usuario
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+            "401":
+              $ref: "#/components/responses/UnauthorizedError"
+        put:
+          summary: Actualizar perfil del usuario
+          description: Actualiza la información del perfil del usuario autenticado
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    firstName:
+                      type: string
+                      example: John
+                    lastName:
+                      type: string
+                      example: Doe
+                    phone:
+                      type: string
+                      example: "+1234567890"
+                    avatar:
+                      type: string
+                      example: https://example.com/avatar.jpg
+                    preferences:
+                      type: object
+                      example:
+                        notifications: true
+                        theme: dark
+          responses:
+            "200":
+              description: Perfil actualizado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Profile updated successfully
+                      user:
+                        $ref: "#/components/schemas/User"
+            "400":
+              $ref: "#/components/responses/ValidationError"
+            "401":
+              $ref: "#/components/responses/UnauthorizedError"
+      /api/auth/change-password:
+        put:
+          summary: Cambiar contraseña
+          description: Cambia la contraseña del usuario autenticado
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - currentPassword
+                    - newPassword
+                  properties:
+                    currentPassword:
+                      type: string
+                      example: oldpassword123
+                    newPassword:
+                      type: string
+                      minLength: 6
+                      example: newpassword123
+          responses:
+            "200":
+              description: Contraseña cambiada exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Password changed successfully
+            "400":
+              $ref: "#/components/responses/ValidationError"
+            "401":
+              $ref: "#/components/responses/UnauthorizedError"
+      /api/auth/logout:
+        post:
+          summary: Cerrar sesión
+          description: Cierra la sesión del usuario autenticado
+          responses:
+            "200":
+              description: Sesión cerrada exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Logged out successfully
+            "401":
+              $ref: "#/components/responses/UnauthorizedError"
+      /api/festivals:
+        get:
+          summary: Obtener festivales
+          description: Lista todos los festivales disponibles
+          responses:
+            "200":
+              description: Lista de festivales
+              content:
+                application/json:
+                  schema:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Festival"
+      /api/festivals/{id}:
+        get:
+          summary: Obtener festival por ID
+          description: Devuelve la información detallada de un festival
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Información del festival
+              content:
+                application/json:
+                  schema:
+                    $ref: "#/components/schemas/FestivalDetail"
+            "404":
+              $ref: "#/components/responses/NotFoundError"
+      /api/festivals/{id}/tickets-preview:
+        get:
+          summary: Vista previa de tickets del festival
+          description: Obtiene una vista previa pública de los tickets disponibles para un
+            festival
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Vista previa de tickets
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                        example: festival-123
+                      previewOnly:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+                        example: Login to see full ticket details and purchase
+                      templates:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            description:
+                              type: string
+                            price:
+                              type: number
+                            currency:
+                              type: string
+                            isAvailable:
+                              type: boolean
+      /api/festivals/{id}/stats:
+        get:
+          summary: Estadísticas del festival
+          description: Obtiene estadísticas detalladas de un festival
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Estadísticas del festival
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      festivalName:
+                        type: string
+                      stats:
+                        type: object
+                        properties:
+                          totalTickets:
+                            type: integer
+                          activeTickets:
+                            type: integer
+                          totalArtists:
+                            type: integer
+                          totalStages:
+                            type: integer
+                          totalVendors:
+                            type: integer
+                          totalPOIs:
+                            type: integer
+      /api/festivals/{id}/map:
+        get:
+          summary: Datos del mapa del festival
+          description: Obtiene todos los datos relacionados con el mapa del festival
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Datos del mapa
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      mapData:
+                        type: object
+                        properties:
+                          stages:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Stage"
+                          vendors:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Vendor"
+                          pois:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/POI"
+                          geofences:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Geofence"
+      /api/festivals/search/{query}:
+        get:
+          summary: Buscar festivales
+          description: Busca festivales por nombre, descripción o venue
+          parameters:
+            - name: query
+              in: path
+              required: true
+              schema:
+                type: string
+              example: electronic
+          responses:
+            "200":
+              description: Resultados de búsqueda
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      query:
+                        type: string
+                      festivals:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Festival"
+                      count:
+                        type: integer
+      /api/tickets:
+        get:
+          summary: Obtener tickets del usuario
+          description: Lista todos los tickets del usuario autenticado
+          parameters:
+            - name: status
+              in: query
+              schema:
+                type: string
+                enum:
+                  - active
+                  - used
+                  - expired
+                  - cancelled
+            - name: festivalId
+              in: query
+              schema:
+                type: string
+          responses:
+            "200":
+              description: Lista de tickets
+              content:
+                application/json:
+                  schema:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Ticket"
+      /api/tickets/{id}:
+        get:
+          summary: Obtener ticket por ID
+          description: Obtiene un ticket específico del usuario autenticado
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: ticket-123
+          responses:
+            "200":
+              description: Información del ticket
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      ticket:
+                        $ref: "#/components/schemas/Ticket"
+            "404":
+              $ref: "#/components/responses/NotFoundError"
+        post:
+          summary: Transferir ticket
+          description: Transfiere un ticket a otro titular
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: ticket-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - newHolderName
+                  properties:
+                    newHolderName:
+                      type: string
+                      example: Jane Doe
+          responses:
+            "200":
+              description: Ticket transferido exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Ticket transferred successfully
+                      ticket:
+                        $ref: "#/components/schemas/Ticket"
+      /api/tickets/{id}/transfer:
+        post:
+          summary: Transferir ticket (alternativo)
+          description: Transfiere un ticket a otro titular usando endpoint alternativo
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: ticket-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - newHolderName
+                  properties:
+                    newHolderName:
+                      type: string
+                      example: Jane Doe
+          responses:
+            "200":
+              description: Ticket transferido exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Ticket transferred successfully
+                      ticket:
+                        $ref: "#/components/schemas/Ticket"
+      /api/tickets/{id}/cancel:
+        post:
+          summary: Cancelar ticket
+          description: Cancela un ticket
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: ticket-123
+          requestBody:
+            required: false
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    reason:
+                      type: string
+                      example: Change of plans
+          responses:
+            "200":
+              description: Ticket cancelado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Ticket cancelled successfully
+                      ticket:
+                        $ref: "#/components/schemas/Ticket"
+      /api/tickets/purchase:
+        post:
+          summary: Comprar ticket
+          description: Procesa la compra de un ticket
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - festivalId
+                    - templateId
+                    - holderName
+                    - paymentMethod
+                    - amount
+                  properties:
+                    festivalId:
+                      type: string
+                      example: festival-123
+                    templateId:
+                      type: string
+                      example: template-456
+                    holderName:
+                      type: string
+                      example: John Doe
+                    paymentMethod:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: card
+                        token:
+                          type: string
+                          example: tok_test_123
+                    amount:
+                      type: number
+                      example: 99.99
+                    currency:
+                      type: string
+                      example: USD
+                    seatInfo:
+                      type: object
+                      example:
+                        section: A
+                        row: "1"
+                        seat: "5"
+          responses:
+            "201":
+              description: Ticket comprado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Ticket purchased successfully
+                      ticket:
+                        $ref: "#/components/schemas/Ticket"
+                      payment:
+                        $ref: "#/components/schemas/Payment"
+            "400":
+              $ref: "#/components/responses/ValidationError"
+      /api/tickets/validate/{qrPayload}:
+        post:
+          summary: Validar ticket
+          description: Valida un ticket usando su código QR
+          parameters:
+            - name: qrPayload
+              in: path
+              required: true
+              schema:
+                type: string
+              example: QR_CODE_123456789
+          responses:
+            "200":
+              description: Ticket validado
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          ticket:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              holderName:
+                                type: string
+                              tier:
+                                type: string
+                              festivalName:
+                                type: string
+                              validFrom:
+                                type: string
+                                format: date-time
+                              validTo:
+                                type: string
+                                format: date-time
+                              status:
+                                type: string
+                          validation:
+                            type: object
+                            properties:
+                              isValid:
+                                type: boolean
+                              message:
+                                type: string
+                              validatedAt:
+                                type: string
+                                format: date-time
+                      message:
+                        type: string
+                        example: Ticket validated successfully
+      /api/tickets/templates/{festivalId}:
+        get:
+          summary: Obtener plantillas de tickets
+          description: Lista las plantillas de tickets disponibles para un festival
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Plantillas de tickets
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      festivalName:
+                        type: string
+                      templates:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/TicketTemplate"
+            "404":
+              $ref: "#/components/responses/NotFoundError"
+      /api/tickets/payments/history:
+        get:
+          summary: Historial de pagos
+          description: Obtiene el historial de pagos del usuario
+          parameters:
+            - name: status
+              in: query
+              schema:
+                type: string
+                enum:
+                  - pending
+                  - completed
+                  - failed
+                  - refunded
+            - name: festivalId
+              in: query
+              schema:
+                type: string
+          responses:
+            "200":
+              description: Historial de pagos
+              content:
+                application/json:
+                  schema:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Payment"
+      /api/tickets/payments/{paymentId}:
+        get:
+          summary: Obtener pago por ID
+          description: Obtiene los detalles de un pago específico
+          parameters:
+            - name: paymentId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: payment-123
+          responses:
+            "200":
+              description: Detalles del pago
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      payment:
+                        $ref: "#/components/schemas/Payment"
+            "404":
+              $ref: "#/components/responses/NotFoundError"
+        post:
+          summary: Reembolsar pago
+          description: Procesa un reembolso para un pago
+          parameters:
+            - name: paymentId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: payment-123
+          requestBody:
+            required: false
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    amount:
+                      type: number
+                      example: 150
+                    reason:
+                      type: string
+                      example: Customer request
+          responses:
+            "200":
+              description: Reembolso procesado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Refund processed successfully
+                      refund:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          amount:
+                            type: number
+                          status:
+                            type: string
+                          processedAt:
+                            type: string
+                            format: date-time
+      /api/tickets/payments/{paymentId}/refund:
+        post:
+          summary: Reembolsar pago (alternativo)
+          description: Procesa un reembolso para un pago usando endpoint alternativo
+          parameters:
+            - name: paymentId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: payment-123
+          requestBody:
+            required: false
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    amount:
+                      type: number
+                      example: 150
+                    reason:
+                      type: string
+                      example: Customer request
+          responses:
+            "200":
+              description: Reembolso procesado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Refund processed successfully
+                      refund:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          amount:
+                            type: number
+                          status:
+                            type: string
+                          processedAt:
+                            type: string
+                            format: date-time
+      /api/mesh/peers:
+        get:
+          summary: Obtener peers de mesh network
+          description: Lista todos los peers conectados en la red mesh
+          responses:
+            "200":
+              description: Lista de peers
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MeshPeer"
+        post:
+          summary: Registrar/actualizar peer
+          description: Registra un nuevo peer o actualiza uno existente
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - id
+                    - noise_public_key
+                    - signing_public_key
+                    - nickname
+                  properties:
+                    id:
+                      type: string
+                      example: test-peer-001
+                    noise_public_key:
+                      type: string
+                      example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+                    signing_public_key:
+                      type: string
+                      example: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
+                    nickname:
+                      type: string
+                      example: TestPeer001
+                    is_connected:
+                      type: boolean
+                      example: true
+                    is_reachable:
+                      type: boolean
+                      example: true
+                    metadata:
+                      type: object
+                      example:
+                        deviceType: mobile
+                        appVersion: 1.0.0
+          responses:
+            "200":
+              description: Peer registrado/actualizado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        $ref: "#/components/schemas/MeshPeer"
+            "400":
+              $ref: "#/components/responses/ValidationError"
+      /api/mesh/peers/{id}:
+        get:
+          summary: Obtener peer por ID
+          description: Devuelve la información de un peer específico
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: test-peer-001
+          responses:
+            "200":
+              description: Información del peer
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        $ref: "#/components/schemas/MeshPeer"
+                      message:
+                        type: string
+                        example: Mesh peer retrieved successfully
+            "404":
+              $ref: "#/components/responses/NotFoundError"
+      /api/mesh/messages:
+        post:
+          summary: Enviar mensaje mesh
+          description: Envía un mensaje a través de la red mesh
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - sender_id
+                    - content
+                  properties:
+                    sender_id:
+                      type: string
+                      example: test-peer-001
+                    content:
+                      type: string
+                      example: Test message from mesh network
+                    recipient_id:
+                      type: string
+                      example: test-peer-002
+                    is_private:
+                      type: boolean
+                      example: true
+                    is_encrypted:
+                      type: boolean
+                      example: true
+                    delivery_status:
+                      type: string
+                      enum:
+                        - pending
+                        - sent
+                        - delivered
+                        - read
+                        - failed
+                      example: sent
+                    metadata:
+                      type: object
+                      example:
+                        messageType: text
+                        timestamp: 1640995200000
+          responses:
+            "201":
+              description: Mensaje enviado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        $ref: "#/components/schemas/MeshMessage"
+            "400":
+              $ref: "#/components/responses/ValidationError"
+      /api/mesh/messages/{peerId}:
+        get:
+          summary: Obtener mensajes de un peer
+          description: Lista los mensajes de un peer específico
+          parameters:
+            - name: peerId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: test-peer-001
+            - name: limit
+              in: query
+              schema:
+                type: integer
+                minimum: 1
+                maximum: 500
+                default: 50
+            - name: offset
+              in: query
+              schema:
+                type: integer
+                minimum: 0
+                default: 0
+          responses:
+            "200":
+              description: Lista de mensajes
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MeshMessage"
+                      message:
+                        type: string
+                        example: Messages retrieved successfully
+      /api/mesh/messages/{id}/status:
+        put:
+          summary: Actualizar estado de mensaje mesh
+          description: Actualiza el estado de entrega de un mensaje mesh
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: message-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - status
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - pending
+                        - sent
+                        - delivered
+                        - read
+                        - failed
+                      example: delivered
+          responses:
+            "200":
+              description: Estado actualizado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+                        example: Message status updated
+      /api/mesh/estadias:
+        post:
+          summary: Crear estadía
+          description: Crea una nueva estadía en el sistema mesh
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - user_id
+                    - festival_id
+                    - room_id
+                    - access_code
+                    - start_time
+                    - end_time
+                  properties:
+                    user_id:
+                      type: string
+                      example: user-123
+                    festival_id:
+                      type: string
+                      example: festival-123
+                    room_id:
+                      type: string
+                      example: room-123
+                    access_code:
+                      type: string
+                      example: TEST-ACCESS-001
+                    start_time:
+                      type: string
+                      format: date-time
+                      example: 2024-07-15T18:00:00.000Z
+                    end_time:
+                      type: string
+                      format: date-time
+                      example: 2024-07-17T06:00:00.000Z
+                    metadata:
+                      type: object
+                      example:
+                        guest_count: 2
+                        special_requests: Late checkout requested
+                        amenities:
+                          - wifi
+                          - breakfast
+          responses:
+            "201":
+              description: Estadía creada exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        $ref: "#/components/schemas/Estadia"
+            "400":
+              $ref: "#/components/responses/ValidationError"
+      /api/mesh/estadias/{id}:
+        get:
+          summary: Obtener estadía por ID
+          description: Devuelve la información de una estadía específica
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: estadia-123
+          responses:
+            "200":
+              description: Información de la estadía
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        $ref: "#/components/schemas/Estadia"
+                      message:
+                        type: string
+                        example: Estadia retrieved successfully
+            "404":
+              $ref: "#/components/responses/NotFoundError"
+        put:
+          summary: Actualizar estado de estadía
+          description: Actualiza el estado de una estadía
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: estadia-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - active
+                        - checked_in
+                        - checked_out
+                        - cancelled
+                      example: checked_in
+          responses:
+            "200":
+              description: Estado actualizado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        $ref: "#/components/schemas/Estadia"
+                      message:
+                        type: string
+                        example: Estadia status updated successfully
+      /api/mesh/estadias/{id}/status:
+        put:
+          summary: Actualizar estado de estadía (alternativo)
+          description: Actualiza el estado de una estadía usando endpoint alternativo
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: estadia-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - status
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - active
+                        - checked_in
+                        - checked_out
+                        - cancelled
+                        - expired
+                      example: checked_in
+          responses:
+            "200":
+              description: Estado actualizado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        $ref: "#/components/schemas/Estadia"
+                      message:
+                        type: string
+                        example: Estadia status updated successfully
+      /api/mesh/estadias/user/{userId}:
+        get:
+          summary: Obtener estadías de usuario
+          description: Lista todas las estadías de un usuario
+          parameters:
+            - name: userId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: user-123
+          responses:
+            "200":
+              description: Lista de estadías
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Estadia"
+                      message:
+                        type: string
+                        example: User estadias retrieved successfully
+      /api/mesh/estadias/access/validate:
+        post:
+          summary: Validar acceso a estadía
+          description: Valida el acceso a una estadía usando código de acceso
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - access_code
+                    - room_id
+                    - user_id
+                  properties:
+                    access_code:
+                      type: string
+                      example: VALID-ACCESS-001
+                    room_id:
+                      type: string
+                      example: room-123
+                    user_id:
+                      type: string
+                      example: user-123
+          responses:
+            "200":
+              description: Validación de acceso
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          accessGranted:
+                            type: boolean
+                            example: true
+                          reason:
+                            type: string
+                            example: Access granted.
+                      message:
+                        type: string
+                        example: Access validation completed
+      /api/chat/rooms:
+        get:
+          summary: Obtener salas de chat del usuario
+          description: Lista todas las salas de chat del usuario autenticado
+          responses:
+            "200":
+              description: Lista de salas de chat
+              content:
+                application/json:
+                  schema:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChatRoom"
+        post:
+          summary: Crear sala de chat privada
+          description: Crea una nueva sala de chat privada con otro usuario
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - participantId
+                  properties:
+                    participantId:
+                      type: string
+                      example: user-456
+                    festivalId:
+                      type: string
+                      example: festival-123
+          responses:
+            "201":
+              description: Sala de chat creada exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Chat room created successfully
+                      chatRoom:
+                        $ref: "#/components/schemas/ChatRoom"
+      /api/chat/rooms/{roomId}/messages:
+        get:
+          summary: Obtener mensajes de sala
+          description: Obtiene todos los mensajes de una sala de chat
+          parameters:
+            - name: roomId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: room-123
+          responses:
+            "200":
+              description: Lista de mensajes
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      roomId:
+                        type: string
+                      messages:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ChatMessage"
+        post:
+          summary: Enviar mensaje
+          description: Envía un mensaje a una sala de chat
+          parameters:
+            - name: roomId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: room-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - text
+                  properties:
+                    text:
+                      type: string
+                      minLength: 1
+                      maxLength: 1000
+                      example: Hello everyone!
+          responses:
+            "201":
+              description: Mensaje enviado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Message sent successfully
+                      chatMessage:
+                        $ref: "#/components/schemas/ChatMessage"
+      /api/chat/rooms/{roomId}/read:
+        put:
+          summary: Marcar mensajes como leídos
+          description: Marca todos los mensajes de una sala como leídos
+          parameters:
+            - name: roomId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: room-123
+          responses:
+            "200":
+              description: Mensajes marcados como leídos
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Messages marked as read
+      /api/chat/messages/{messageId}:
+        put:
+          summary: Editar mensaje
+          description: Edita un mensaje existente
+          parameters:
+            - name: messageId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: message-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - text
+                  properties:
+                    text:
+                      type: string
+                      minLength: 1
+                      maxLength: 1000
+                      example: Updated message text
+          responses:
+            "200":
+              description: Mensaje actualizado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Message updated successfully
+        delete:
+          summary: Eliminar mensaje
+          description: Elimina un mensaje (eliminación suave)
+          parameters:
+            - name: messageId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: message-123
+          responses:
+            "200":
+              description: Mensaje eliminado exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Message deleted successfully
+      /api/users/profile:
+        get:
+          summary: Obtener perfil de usuario
+          description: Obtiene el perfil completo del usuario autenticado
+          responses:
+            "200":
+              description: Perfil del usuario
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+      /api/users/activity:
+        get:
+          summary: Obtener actividad del usuario
+          description: Obtiene la actividad reciente del usuario (tickets, chat, favoritos)
+          responses:
+            "200":
+              description: Actividad del usuario
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      tickets:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Ticket"
+                      chatActivity:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ChatActivity"
+                      favorites:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Artist"
+      /api/users/presence/{festivalId}:
+        get:
+          summary: Obtener presencia del usuario
+          description: Obtiene la información de presencia del usuario en un festival
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Información de presencia
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      presence:
+                        $ref: "#/components/schemas/UserPresence"
+        put:
+          summary: Actualizar presencia del usuario
+          description: Actualiza la información de presencia del usuario en un festival
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    latitude:
+                      type: number
+                      example: 40.7128
+                    longitude:
+                      type: number
+                      example: -74.006
+                    status:
+                      type: string
+                      enum:
+                        - online
+                        - offline
+                        - away
+                      example: online
+          responses:
+            "200":
+              description: Presencia actualizada exitosamente
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Presence updated successfully
+      /api/users/nearby/{festivalId}:
+        get:
+          summary: Obtener usuarios cercanos
+          description: Obtiene usuarios cercanos en un festival
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+            - name: latitude
+              in: query
+              required: true
+              schema:
+                type: number
+              example: 40.7128
+            - name: longitude
+              in: query
+              required: true
+              schema:
+                type: number
+              example: -74.006
+            - name: radius
+              in: query
+              schema:
+                type: integer
+                default: 1000
+              example: 500
+          responses:
+            "200":
+              description: Lista de usuarios cercanos
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      nearbyUsers:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/NearbyUser"
+                      userCount:
+                        type: integer
+      /api/users/notifications:
+        get:
+          summary: Obtener notificaciones del usuario
+          description: Obtiene las notificaciones del usuario
+          parameters:
+            - name: limit
+              in: query
+              schema:
+                type: integer
+                default: 20
+              example: 10
+            - name: offset
+              in: query
+              schema:
+                type: integer
+                default: 0
+              example: 0
+          responses:
+            "200":
+              description: Lista de notificaciones
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      notifications:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Notification"
+      /api/users/notifications/{id}/read:
+        put:
+          summary: Marcar notificación como leída
+          description: Marca una notificación específica como leída
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: notification-123
+          responses:
+            "200":
+              description: Notificación marcada como leída
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Notification marked as read
+      /api/users/notifications/read-all:
+        put:
+          summary: Marcar todas las notificaciones como leídas
+          description: Marca todas las notificaciones del usuario como leídas
+          responses:
+            "200":
+              description: Todas las notificaciones marcadas como leídas
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: All notifications marked as read
+      /api/users/favorites:
+        get:
+          summary: Obtener favoritos del usuario
+          description: Obtiene los artistas favoritos del usuario
+          responses:
+            "200":
+              description: Lista de favoritos
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      favorites:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Artist"
+      /api/users/favorites/{artistId}:
+        post:
+          summary: Agregar artista a favoritos
+          description: Agrega un artista a los favoritos del usuario
+          parameters:
+            - name: artistId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: artist-123
+          responses:
+            "201":
+              description: Artista agregado a favoritos
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Artist added to favorites
+        delete:
+          summary: Remover artista de favoritos
+          description: Remueve un artista de los favoritos del usuario
+          parameters:
+            - name: artistId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: artist-123
+          responses:
+            "200":
+              description: Artista removido de favoritos
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Artist removed from favorites
+      /api/artists:
+        get:
+          summary: Obtener todos los artistas
+          description: Lista todos los artistas con filtros opcionales
+          parameters:
+            - name: genre
+              in: query
+              schema:
+                type: string
+              example: electronic
+            - name: festivalId
+              in: query
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Lista de artistas
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      artists:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Artist"
+                      count:
+                        type: integer
+      /api/artists/{id}:
+        get:
+          summary: Obtener artista por ID
+          description: Obtiene información detallada de un artista específico
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: artist-123
+          responses:
+            "200":
+              description: Información del artista
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      artist:
+                        $ref: "#/components/schemas/ArtistDetail"
+            "404":
+              $ref: "#/components/responses/NotFoundError"
+      /api/artists/genre/{genre}:
+        get:
+          summary: Obtener artistas por género
+          description: Lista artistas filtrados por género
+          parameters:
+            - name: genre
+              in: path
+              required: true
+              schema:
+                type: string
+              example: electronic
+            - name: festivalId
+              in: query
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Lista de artistas por género
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      genre:
+                        type: string
+                      artists:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Artist"
+                      count:
+                        type: integer
+      /api/artists/search/{query}:
+        get:
+          summary: Buscar artistas
+          description: Busca artistas por nombre, biografía o género
+          parameters:
+            - name: query
+              in: path
+              required: true
+              schema:
+                type: string
+              example: deadmau5
+            - name: festivalId
+              in: query
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Resultados de búsqueda
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      query:
+                        type: string
+                      festivalId:
+                        type: string
+                      artists:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Artist"
+                      count:
+                        type: integer
+      /api/artists/festival/{festivalId}:
+        get:
+          summary: Obtener artistas de festival
+          description: Lista todos los artistas de un festival específico
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+            - name: genre
+              in: query
+              schema:
+                type: string
+              example: electronic
+          responses:
+            "200":
+              description: Lista de artistas del festival
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      festivalName:
+                        type: string
+                      artists:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Artist"
+                      count:
+                        type: integer
+      /api/artists/stats/overview:
+        get:
+          summary: Estadísticas de artistas
+          description: Obtiene estadísticas generales de artistas
+          parameters:
+            - name: festivalId
+              in: query
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Estadísticas de artistas
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      stats:
+                        type: object
+                        properties:
+                          totalArtists:
+                            type: integer
+                          totalGenres:
+                            type: integer
+                      genres:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            count:
+                              type: integer
+                      artistsByGenre:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            genre:
+                              type: string
+                            artistCount:
+                              type: integer
+                            performanceCount:
+                              type: integer
+      /api/artists/popular:
+        get:
+          summary: Obtener artistas populares
+          description: Lista los artistas más populares por número de presentaciones
+          parameters:
+            - name: festivalId
+              in: query
+              schema:
+                type: string
+              example: festival-123
+            - name: limit
+              in: query
+              schema:
+                type: integer
+                default: 10
+              example: 5
+          responses:
+            "200":
+              description: Lista de artistas populares
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      limit:
+                        type: integer
+                      artists:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PopularArtist"
+      /api/artists/{id}/upcoming:
+        get:
+          summary: Obtener presentaciones próximas del artista
+          description: Lista las próximas presentaciones de un artista
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: artist-123
+          responses:
+            "200":
+              description: Próximas presentaciones
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      artist:
+                        $ref: "#/components/schemas/Artist"
+                      upcomingPerformances:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Performance"
+                      count:
+                        type: integer
+      /api/pois/festival/{festivalId}:
+        get:
+          summary: Obtener POIs de festival
+          description: Lista todos los puntos de interés de un festival
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+            - name: kind
+              in: query
+              required: false
+              schema:
+                type: string
+                enum:
+                  - stage
+                  - info
+                  - medic
+                  - entrance
+                  - exit
+                  - water
+                  - locker
+                  - lostfound
+                  - charging
+                  - restroom
+              example: stage
+          responses:
+            "200":
+              description: Lista de POIs
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                        example: festival-123
+                      festivalName:
+                        type: string
+                        example: Tiikii Festival 2024
+                      pois:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/POI"
+                      count:
+                        type: integer
+      /api/pois/{id}:
+        get:
+          summary: Obtener POI por ID
+          description: Devuelve la información detallada de un punto de interés
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: poi-123
+          responses:
+            "200":
+              description: Información del POI
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      poi:
+                        $ref: "#/components/schemas/POI"
+      /api/pois/festival/{festivalId}/nearby:
+        get:
+          summary: Obtener POIs cercanos
+          description: Encuentra puntos de interés cercanos a una ubicación
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+            - name: latitude
+              in: query
+              required: true
+              schema:
+                type: number
+                format: float
+              example: 40.7128
+            - name: longitude
+              in: query
+              required: true
+              schema:
+                type: number
+                format: float
+              example: -74.006
+            - name: radius
+              in: query
+              required: false
+              schema:
+                type: integer
+                default: 1000
+              example: 500
+            - name: kind
+              in: query
+              required: false
+              schema:
+                type: string
+              example: stage
+          responses:
+            "200":
+              description: POIs cercanos
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      festivalName:
+                        type: string
+                      location:
+                        type: object
+                        properties:
+                          lat:
+                            type: number
+                          lon:
+                            type: number
+                      radius:
+                        type: integer
+                      kind:
+                        type: string
+                      pois:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/components/schemas/POI"
+                            - type: object
+                              properties:
+                                distance:
+                                  type: integer
+                                  description: Distance in meters
+                      count:
+                        type: integer
+      /api/schedule/festival/{festivalId}:
+        get:
+          summary: Obtener programación del festival
+          description: Lista toda la programación de un festival
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+            - name: date
+              in: query
+              required: false
+              schema:
+                type: string
+                format: date
+              example: 2024-07-15
+            - name: stageId
+              in: query
+              required: false
+              schema:
+                type: string
+              example: stage-456
+          responses:
+            "200":
+              description: Programación del festival
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      festivalName:
+                        type: string
+                      schedule:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ScheduleSlot"
+                      count:
+                        type: integer
+      /api/schedule/festival/{festivalId}/now:
+        get:
+          summary: Obtener actuaciones actuales y próximas
+          description: Devuelve las actuaciones que están ocurriendo ahora y las próximas
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+          responses:
+            "200":
+              description: Actuaciones actuales y próximas
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      festivalName:
+                        type: string
+                      currentTime:
+                        type: string
+                        format: date-time
+                      performances:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: "#/components/schemas/ScheduleSlot"
+                            - type: object
+                              properties:
+                                status:
+                                  type: string
+                                  enum:
+                                    - now
+                                    - upcoming
+                                    - finished
+      /api/vendors/festival/{festivalId}:
+        get:
+          summary: Obtener vendedores del festival
+          description: Lista todos los vendedores de un festival
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+            - name: type
+              in: query
+              required: false
+              schema:
+                type: string
+                enum:
+                  - food
+                  - drink
+                  - merch
+                  - atm
+                  - restroom
+                  - charging
+                  - medical
+                  - security
+              example: food
+          responses:
+            "200":
+              description: Lista de vendedores
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      festivalName:
+                        type: string
+                      vendors:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Vendor"
+                      count:
+                        type: integer
+      /api/vendors/{id}:
+        get:
+          summary: Obtener vendedor por ID
+          description: Devuelve la información detallada de un vendedor
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: vendor-123
+          responses:
+            "200":
+              description: Información del vendedor
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      vendor:
+                        $ref: "#/components/schemas/Vendor"
+      /api/vendors/{id}/wait-time:
+        put:
+          summary: Actualizar tiempo de espera
+          description: Actualiza el tiempo de espera de un vendedor
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: vendor-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                    - waitTime
+                  properties:
+                    waitTime:
+                      type: integer
+                      minimum: 0
+                      example: 15
+          responses:
+            "200":
+              description: Tiempo de espera actualizado
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Wait time updated successfully
+                      vendorId:
+                        type: string
+                      waitTime:
+                        type: integer
+      /api/widgets/festival/{festivalId}:
+        get:
+          summary: Obtener widgets del festival
+          description: Lista todos los widgets disponibles para un festival
+          parameters:
+            - name: festivalId
+              in: path
+              required: true
+              schema:
+                type: string
+              example: festival-123
+            - name: userId
+              in: query
+              required: false
+              schema:
+                type: string
+              example: user-123
+          responses:
+            "200":
+              description: Lista de widgets
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      festivalId:
+                        type: string
+                      festivalName:
+                        type: string
+                      widgets:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Widget"
+      /api/widgets/{id}:
+        get:
+          summary: Obtener widget por ID
+          description: Devuelve la información detallada de un widget
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: widget-123
+            - name: userId
+              in: query
+              required: false
+              schema:
+                type: string
+              example: user-123
+          responses:
+            "200":
+              description: Información del widget
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      widget:
+                        $ref: "#/components/schemas/Widget"
+      /api/widgets/{id}/preferences:
+        put:
+          summary: Actualizar preferencias de widget
+          description: Actualiza las preferencias del usuario para un widget específico
+          parameters:
+            - name: id
+              in: path
+              required: true
+              schema:
+                type: string
+              example: widget-123
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    isEnabled:
+                      type: boolean
+                      example: true
+                    orderIndex:
+                      type: integer
+                      example: 1
+                    customSettings:
+                      type: object
+                      example:
+                        theme: dark
+                        size: large
+          responses:
+            "200":
+              description: Preferencias actualizadas
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Widget preferences updated successfully
+    components:
+      securitySchemes:
+        BearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+      schemas:
+        SuccessResponse:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: true
+            data:
+              type: object
+            message:
+              type: string
+        User:
+          type: object
+          properties:
+            id:
+              type: string
+              example: user-123
+            username:
+              type: string
+              example: testuser
+            email:
+              type: string
+              format: email
+              example: test@example.com
+            firstName:
+              type: string
+              example: Test
+            lastName:
+              type: string
+              example: User
+            avatar:
+              type: string
+              nullable: true
+            isActive:
+              type: boolean
+              example: true
+            isVerified:
+              type: boolean
+              example: false
+            createdAt:
+              type: string
+              format: date-time
+        Festival:
+          type: object
+          properties:
+            id:
+              type: string
+              example: festival-123
+            name:
+              type: string
+              example: Tiikii Festival 2024
+            description:
+              type: string
+              example: El mejor festival de música electrónica
+            logo:
+              type: string
+              example: https://example.com/logo.png
+            venue:
+              type: string
+              example: Parque Central
+            startDate:
+              type: string
+              format: date-time
+            endDate:
+              type: string
+              format: date-time
+            latitude:
+              type: number
+              example: 40.7128
+            longitude:
+              type: number
+              example: -74.006
+            primaryColor:
+              type: string
+              example: "#FF6B6B"
+            secondaryColor:
+              type: string
+              example: "#4ECDC4"
+            isActive:
+              type: boolean
+              example: true
+            createdAt:
+              type: string
+              format: date-time
+        FestivalDetail:
+          allOf:
+            - $ref: "#/components/schemas/Festival"
+            - type: object
+              properties:
+                latitudeDelta:
+                  type: number
+                  example: 0.01
+                longitudeDelta:
+                  type: number
+                  example: 0.01
+                accentColor:
+                  type: string
+                  example: "#45B7D1"
+                backgroundColor:
+                  type: string
+                  example: "#F8F9FA"
+                decorationIcons:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - 🎵
+                    - 🎪
+                    - 🎨
+        Ticket:
+          type: object
+          properties:
+            id:
+              type: string
+              example: ticket-123
+            festivalId:
+              type: string
+              example: festival-123
+            templateId:
+              type: string
+              example: template-456
+            qrPayload:
+              type: string
+              example: QR_CODE_123456789
+            holderName:
+              type: string
+              example: John Doe
+            tier:
+              type: string
+              example: VIP
+            validFrom:
+              type: string
+              format: date-time
+            validTo:
+              type: string
+              format: date-time
+            status:
+              type: string
+              enum:
+                - active
+                - used
+                - expired
+                - cancelled
+              example: active
+            price:
+              type: number
+              example: 150
+            createdAt:
+              type: string
+              format: date-time
+        TicketTemplate:
+          type: object
+          properties:
+            id:
+              type: string
+              example: template-456
+            name:
+              type: string
+              example: VIP Pass
+            description:
+              type: string
+              example: Acceso VIP con beneficios exclusivos
+            price:
+              type: number
+              example: 150
+            currency:
+              type: string
+              example: USD
+            benefits:
+              type: array
+              items:
+                type: string
+              example:
+                - Acceso VIP
+                - Área exclusiva
+                - Barra premium
+            maxQuantity:
+              type: integer
+              example: 100
+            currentQuantity:
+              type: integer
+              example: 25
+            isAvailable:
+              type: boolean
+              example: true
+        Payment:
+          type: object
+          properties:
+            id:
+              type: string
+              example: payment-123
+            status:
+              type: string
+              enum:
+                - pending
+                - completed
+                - failed
+                - refunded
+              example: completed
+            amount:
+              type: number
+              example: 150
+            currency:
+              type: string
+              example: USD
+            gatewayTransactionId:
+              type: string
+              example: txn_123456789
+            createdAt:
+              type: string
+              format: date-time
+        MeshPeer:
+          type: object
+          properties:
+            id:
+              type: string
+              example: test-peer-001
+            noisePublicKey:
+              type: string
+              example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            signingPublicKey:
+              type: string
+              example: fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210
+            nickname:
+              type: string
+              example: TestPeer001
+            isConnected:
+              type: boolean
+              example: true
+            isReachable:
+              type: boolean
+              example: true
+            metadata:
+              type: object
+              properties:
+                deviceType:
+                  type: string
+                  example: mobile
+                appVersion:
+                  type: string
+                  example: 1.0.0
+            createdAt:
+              type: string
+              format: date-time
+        MeshMessage:
+          type: object
+          properties:
+            id:
+              type: string
+              example: message-123
+            senderId:
+              type: string
+              example: test-peer-001
+            recipientId:
+              type: string
+              example: test-peer-002
+            content:
+              type: string
+              example: Test message from mesh network
+            isPrivate:
+              type: boolean
+              example: true
+            isEncrypted:
+              type: boolean
+              example: true
+            deliveryStatus:
+              type: string
+              enum:
+                - sent
+                - delivered
+                - read
+                - failed
+              example: sent
+            metadata:
+              type: object
+              properties:
+                messageType:
+                  type: string
+                  example: text
+                timestamp:
+                  type: integer
+                  example: 1640995200000
+            createdAt:
+              type: string
+              format: date-time
+        Estadia:
+          type: object
+          properties:
+            id:
+              type: string
+              example: estadia-123
+            userId:
+              type: string
+              example: user-123
+            festivalId:
+              type: string
+              example: festival-123
+            roomId:
+              type: string
+              example: room-123
+            accessCode:
+              type: string
+              example: TEST-ACCESS-001
+            startTime:
+              type: string
+              format: date-time
+            endTime:
+              type: string
+              format: date-time
+            status:
+              type: string
+              enum:
+                - active
+                - checked_in
+                - checked_out
+                - cancelled
+              example: active
+            checkInTime:
+              type: string
+              format: date-time
+              nullable: true
+            checkOutTime:
+              type: string
+              format: date-time
+              nullable: true
+            metadata:
+              type: object
+              properties:
+                guestCount:
+                  type: integer
+                  example: 2
+                specialRequests:
+                  type: string
+                  example: Late checkout requested
+                amenities:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - wifi
+                    - breakfast
+            createdAt:
+              type: string
+              format: date-time
+        Stage:
+          type: object
+          properties:
+            id:
+              type: string
+              example: stage-123
+            festivalId:
+              type: string
+              example: festival-123
+            name:
+              type: string
+              example: Main Stage
+            description:
+              type: string
+              example: The main stage of the festival
+            latitude:
+              type: number
+              example: 40.7128
+            longitude:
+              type: number
+              example: -74.006
+            capacity:
+              type: integer
+              example: 10000
+            isActive:
+              type: boolean
+              example: true
+        Vendor:
+          type: object
+          properties:
+            id:
+              type: string
+              example: vendor-123
+            festivalId:
+              type: string
+              example: festival-123
+            name:
+              type: string
+              example: Food Truck Central
+            description:
+              type: string
+              example: Delicious food and drinks
+            type:
+              type: string
+              enum:
+                - food
+                - drink
+                - merch
+                - atm
+                - restroom
+                - charging
+                - medical
+                - security
+              example: food
+            latitude:
+              type: number
+              example: 40.7128
+            longitude:
+              type: number
+              example: -74.006
+            rating:
+              type: number
+              minimum: 0
+              maximum: 5
+              example: 4.5
+            waitTime:
+              type: integer
+              minimum: 0
+              example: 15
+            isActive:
+              type: boolean
+              example: true
+        POI:
+          type: object
+          properties:
+            id:
+              type: string
+              example: poi-123
+            festivalId:
+              type: string
+              example: festival-123
+            name:
+              type: string
+              example: First Aid Station
+            description:
+              type: string
+              example: Medical assistance and first aid
+            kind:
+              type: string
+              enum:
+                - stage
+                - info
+                - medic
+                - entrance
+                - exit
+                - water
+                - locker
+                - lostfound
+                - charging
+                - restroom
+              example: medic
+            latitude:
+              type: number
+              example: 40.7128
+            longitude:
+              type: number
+              example: -74.006
+            isActive:
+              type: boolean
+              example: true
+        Widget:
+          type: object
+          properties:
+            id:
+              type: string
+              example: widget-123
+            festivalId:
+              type: string
+              example: festival-123
+            title:
+              type: string
+              example: Weather Widget
+            type:
+              type: string
+              example: weather
+            content:
+              type: object
+              example:
+                temperature: 25
+                condition: sunny
+            orderIndex:
+              type: integer
+              example: 1
+            priority:
+              type: integer
+              example: 5
+            isActive:
+              type: boolean
+              example: true
+            isEnabled:
+              type: boolean
+              example: true
+            customSettings:
+              type: object
+              example:
+                theme: dark
+                size: large
+        Geofence:
+          type: object
+          properties:
+            id:
+              type: string
+              example: geofence-123
+            festivalId:
+              type: string
+              example: festival-123
+            name:
+              type: string
+              example: VIP Area
+            description:
+              type: string
+              example: Exclusive VIP area
+            latitude:
+              type: number
+              example: 40.7128
+            longitude:
+              type: number
+              example: -74.006
+            radius:
+              type: number
+              example: 50
+            isActive:
+              type: boolean
+              example: true
+        ChatRoom:
+          type: object
+          properties:
+            id:
+              type: string
+              example: room-123
+            festivalId:
+              type: string
+              example: festival-123
+            name:
+              type: string
+              example: General Chat
+            type:
+              type: string
+              enum:
+                - general
+                - friends
+                - group
+              example: general
+            avatar:
+              type: string
+              example: 👥
+            createdBy:
+              type: string
+              example: user-123
+            unreadCount:
+              type: integer
+              example: 5
+            lastMessage:
+              type: string
+              example: Hello everyone!
+            lastMessageTime:
+              type: string
+              format: date-time
+            createdAt:
+              type: string
+              format: date-time
+        ChatMessage:
+          type: object
+          properties:
+            id:
+              type: string
+              example: message-123
+            roomId:
+              type: string
+              example: room-123
+            senderId:
+              type: string
+              example: user-123
+            text:
+              type: string
+              example: Hello everyone!
+            timestamp:
+              type: string
+              format: date-time
+            isEdited:
+              type: boolean
+              example: false
+            editedAt:
+              type: string
+              format: date-time
+              nullable: true
+            isDeleted:
+              type: boolean
+              example: false
+            deletedAt:
+              type: string
+              format: date-time
+              nullable: true
+            senderName:
+              type: string
+              example: John Doe
+            isOwn:
+              type: boolean
+              example: true
+        ChatActivity:
+          type: object
+          properties:
+            roomName:
+              type: string
+              example: General Chat
+            roomType:
+              type: string
+              example: general
+            messageCount:
+              type: integer
+              example: 25
+            lastActivity:
+              type: string
+              format: date-time
+        UserPresence:
+          type: object
+          properties:
+            id:
+              type: string
+              example: presence-123
+            userId:
+              type: string
+              example: user-123
+            festivalId:
+              type: string
+              example: festival-123
+            latitude:
+              type: number
+              example: 40.7128
+            longitude:
+              type: number
+              example: -74.006
+            status:
+              type: string
+              enum:
+                - online
+                - offline
+                - away
+              example: online
+            lastSeen:
+              type: string
+              format: date-time
+            location:
+              type: object
+              properties:
+                lat:
+                  type: number
+                lon:
+                  type: number
+        NearbyUser:
+          type: object
+          properties:
+            id:
+              type: string
+              example: user-456
+            firstName:
+              type: string
+              example: Jane
+            lastName:
+              type: string
+              example: Doe
+            username:
+              type: string
+              example: janedoe
+            avatar:
+              type: string
+              nullable: true
+            latitude:
+              type: number
+              example: 40.7128
+            longitude:
+              type: number
+              example: -74.006
+            status:
+              type: string
+              example: online
+            distance:
+              type: integer
+              example: 150
+            location:
+              type: object
+              properties:
+                lat:
+                  type: number
+                lon:
+                  type: number
+        Notification:
+          type: object
+          properties:
+            id:
+              type: string
+              example: notification-123
+            userId:
+              type: string
+              example: user-123
+            type:
+              type: string
+              example: ticket_purchased
+            title:
+              type: string
+              example: Ticket Purchased
+            message:
+              type: string
+              example: Your ticket for Tiikii Festival has been purchased successfully
+            data:
+              type: object
+              example:
+                ticketId: ticket-123
+                festivalId: festival-123
+            isRead:
+              type: boolean
+              example: false
+            createdAt:
+              type: string
+              format: date-time
+        Artist:
+          type: object
+          properties:
+            id:
+              type: string
+              example: artist-123
+            name:
+              type: string
+              example: Deadmau5
+            bio:
+              type: string
+              example: Canadian electronic music producer and DJ
+            genre:
+              type: string
+              example: electronic
+            imageUrl:
+              type: string
+              example: https://example.com/artist.jpg
+            socialMedia:
+              type: object
+              example:
+                twitter: "@deadmau5"
+                instagram: "@deadmau5"
+        ArtistDetail:
+          allOf:
+            - $ref: "#/components/schemas/Artist"
+            - type: object
+              properties:
+                schedule:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Performance"
+        PopularArtist:
+          allOf:
+            - $ref: "#/components/schemas/Artist"
+            - type: object
+              properties:
+                performanceCount:
+                  type: integer
+                  example: 3
+        Performance:
+          type: object
+          properties:
+            id:
+              type: string
+              example: performance-123
+            artistId:
+              type: string
+              example: artist-123
+            festivalId:
+              type: string
+              example: festival-123
+            stageId:
+              type: string
+              example: stage-123
+            startTime:
+              type: string
+              format: date-time
+            endTime:
+              type: string
+              format: date-time
+            festival:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                logo:
+                  type: string
+            stage:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+        ErrorResponse:
+          type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            error:
+              type: object
+              properties:
+                type:
+                  type: string
+                  example: ValidationError
+                message:
+                  type: string
+                  example: Invalid input data
+                code:
+                  type: string
+                  example: VALIDATION_ERROR
+                field:
+                  type: string
+                  example: email
+                details:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - Field 'email' is required
+            timestamp:
+              type: string
+              format: date-time
+        ScheduleSlot:
+          type: object
+          properties:
+            id:
+              type: string
+              example: schedule-123
+            festivalId:
+              type: string
+              example: festival-123
+            artistId:
+              type: string
+              example: artist-456
+            stageId:
+              type: string
+              example: stage-789
+            startTime:
+              type: string
+              format: date-time
+              example: 2024-07-15T20:00:00.000Z
+            endTime:
+              type: string
+              format: date-time
+              example: 2024-07-15T22:00:00.000Z
+            artist:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                bio:
+                  type: string
+                genre:
+                  type: string
+                imageUrl:
+                  type: string
+                socialMedia:
+                  type: object
+            stage:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                capacity:
+                  type: integer
+      responses:
+        ValidationError:
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  type: ValidationError
+                  message: Invalid input data
+                  code: VALIDATION_ERROR
+                  details:
+                    - Field 'email' is required
+        UnauthorizedError:
+          description: No autorizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  type: UnauthorizedError
+                  message: Authentication required
+                  code: UNAUTHORIZED
+        NotFoundError:
+          description: Recurso no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  type: NotFoundError
+                  message: Resource not found
+                  code: NOT_FOUND
+        InternalServerError:
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                success: false
+                error:
+                  type: InternalServerError
+                  message: An unexpected error occurred
+                  code: INTERNAL_ERROR
+  meta:
+    id: spc_350dddeabd534574a481155b0235d8b6
+    created: 1757018901490
+    modified: 1757018901491

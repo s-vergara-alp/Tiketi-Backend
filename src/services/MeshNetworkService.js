@@ -717,6 +717,19 @@ class MeshNetworkService extends EventEmitter {
         await this.db.run('UPDATE mesh_messages SET delivery_status = ? WHERE id = ?', [status, messageId]);
     }
 
+    async getIdentityByFingerprint(fingerprint) {
+        const identity = await this.db.get(
+            'SELECT * FROM mesh_identities WHERE fingerprint = ? AND is_active = 1',
+            [fingerprint]
+        );
+        if (identity) {
+            identity.is_active = Boolean(identity.is_active);
+            identity.is_favorite = Boolean(identity.is_favorite);
+            identity.is_blocked = Boolean(identity.is_blocked);
+        }
+        return identity;
+    }
+
     async generateUserIdentity(userId) {
         const cryptoUtils = require('../utils/cryptoUtils');
         const noiseKeyPair = cryptoUtils.generateNoiseKeyPair();

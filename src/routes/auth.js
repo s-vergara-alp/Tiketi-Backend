@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const database = require('../database/database');
 const { generateToken, authenticateToken } = require('../middleware/auth');
 const { asyncHandler, createValidationError, createNotFoundError } = require('../middleware/errorHandler');
+const emailService = require('../services/EmailService');
 
 const router = express.Router();
 
@@ -66,20 +67,31 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user
+    // Create user (not verified initially)
     const userId = uuidv4();
     const result = await database.run(
         `INSERT INTO users (id, username, email, password_hash, first_name, last_name, phone, date_of_birth, is_verified)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, username, email, passwordHash, firstName, lastName, phone || null, dateOfBirth || null, 1] // Auto-verify for demo
+        [userId, username, email, passwordHash, firstName, lastName, phone || null, dateOfBirth || null, 0] // Not verified initially
     );
 
     if (result.changes === 0) {
         throw new Error('Failed to create user');
     }
 
-    // Generate token
-    const token = generateToken(userId);
+    // Send verification email
+    try {
+        await emailService.sendVerificationEmail(userId, email, firstName);
+    } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't fail registration if email fails, but log the error
+        // Still generate a token for manual verification
+        try {
+            await emailService.generateVerificationToken(userId, email);
+        } catch (tokenError) {
+            console.error('Failed to generate verification token:', tokenError);
+        }
+    }
 
     // Get created user (without password)
     const user = await database.get(
@@ -88,9 +100,9 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
     );
 
     res.status(201).json({
-        message: 'User registered successfully',
+        message: 'User registered successfully. Please check your email to verify your account.',
         user,
-        token
+        requiresVerification: true
     });
 }));
 
@@ -122,6 +134,20 @@ router.post('/login', loginValidation, asyncHandler(async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
     if (!isPasswordValid) {
         throw createValidationError('Invalid email or password');
+    }
+
+    // Check if user is verified
+    if (!user.is_verified) {
+        return res.status(403).json({
+            message: 'Please verify your email address before logging in',
+            requiresVerification: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                first_name: user.first_name,
+                is_verified: user.is_verified
+            }
+        });
     }
 
     // Update last login
@@ -291,6 +317,116 @@ router.put('/change-password', authenticateToken, [
     res.json({
         message: 'Password changed successfully'
     });
+}));
+
+// Verify email address
+router.post('/verify-email', [
+    body('token')
+        .notEmpty()
+        .withMessage('Verification token is required')
+], asyncHandler(async (req, res) => {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw createValidationError(errors.array()[0].msg);
+    }
+
+    const { token } = req.body;
+
+    try {
+        // Verify the token
+        const tokenRecord = await emailService.verifyToken(token);
+
+        // Mark token as used
+        await emailService.markTokenAsUsed(tokenRecord.id);
+
+        // Update user verification status
+        await database.run(
+            'UPDATE users SET is_verified = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [tokenRecord.user_id]
+        );
+
+        // Get updated user
+        const user = await database.get(
+            'SELECT id, username, email, first_name, last_name, avatar, is_verified, is_admin, is_staff, is_security, role, created_at FROM users WHERE id = ?',
+            [tokenRecord.user_id]
+        );
+
+        // Generate token for immediate login
+        const authToken = generateToken(user.id);
+
+        res.json({
+            message: 'Email verified successfully',
+            user,
+            token: authToken
+        });
+
+    } catch (error) {
+        throw createValidationError(error.message);
+    }
+}));
+
+// Resend verification email
+router.post('/resend-verification', [
+    body('email')
+        .isEmail()
+        .normalizeEmail()
+        .withMessage('Please provide a valid email address')
+], asyncHandler(async (req, res) => {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw createValidationError(errors.array()[0].msg);
+    }
+
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await database.get(
+        'SELECT id, email, first_name, is_verified FROM users WHERE email = ?',
+        [email]
+    );
+
+    if (!user) {
+        throw createNotFoundError('User not found');
+    }
+
+    if (user.is_verified) {
+        throw createValidationError('Email is already verified');
+    }
+
+    // Clean up any existing tokens for this user
+    await database.run(
+        'DELETE FROM email_verification_tokens WHERE user_id = ?',
+        [user.id]
+    );
+
+    // Send new verification email
+    try {
+        await emailService.sendVerificationEmail(user.id, user.email, user.first_name);
+        
+        res.json({
+            message: 'Verification email sent successfully'
+        });
+    } catch (error) {
+        console.error('Failed to send verification email:', error);
+        
+        // If email service is not configured, still generate token for manual verification
+        if (error.message.includes('Email service not configured')) {
+            try {
+                await emailService.generateVerificationToken(user.id, user.email);
+                res.json({
+                    message: 'Email service not configured. Verification token generated for manual verification.',
+                    requiresEmailConfig: true
+                });
+            } catch (tokenError) {
+                console.error('Failed to generate verification token:', tokenError);
+                throw new Error('Email service not configured and token generation failed');
+            }
+        } else {
+            throw new Error('Failed to send verification email');
+        }
+    }
 }));
 
 // Logout (client-side token removal, but we can track it)
