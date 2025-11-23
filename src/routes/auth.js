@@ -67,29 +67,28 @@ router.post('/register', registerValidation, asyncHandler(async (req, res) => {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user (not verified initially)
+    // Create user (auto-verified if email service not configured)
     const userId = uuidv4();
+    const isEmailServiceConfigured = emailService.isConfigured();
+    const isVerified = !isEmailServiceConfigured ? 1 : 0; // Auto-verify if email service disabled
+    
     const result = await database.run(
         `INSERT INTO users (id, username, email, password_hash, first_name, last_name, phone, date_of_birth, is_verified)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, username, email, passwordHash, firstName, lastName, phone || null, dateOfBirth || null, 0] // Not verified initially
+        [userId, username, email, passwordHash, firstName, lastName, phone || null, dateOfBirth || null, isVerified]
     );
 
     if (result.changes === 0) {
         throw new Error('Failed to create user');
     }
 
-    // Send verification email
-    try {
-        await emailService.sendVerificationEmail(userId, email, firstName);
-    } catch (emailError) {
-        console.error('Failed to send verification email:', emailError);
-        // Don't fail registration if email fails, but log the error
-        // Still generate a token for manual verification
+    // Send verification email only if email service is configured
+    if (isEmailServiceConfigured) {
         try {
-            await emailService.generateVerificationToken(userId, email);
-        } catch (tokenError) {
-            console.error('Failed to generate verification token:', tokenError);
+            await emailService.sendVerificationEmail(userId, email, firstName);
+        } catch (emailError) {
+            console.error('Failed to send verification email:', emailError);
+            // Don't fail registration if email fails
         }
     }
 
@@ -401,31 +400,29 @@ router.post('/resend-verification', [
         [user.id]
     );
 
-    // Send new verification email
-    try {
-        await emailService.sendVerificationEmail(user.id, user.email, user.first_name);
-        
-        res.json({
-            message: 'Verification email sent successfully'
-        });
-    } catch (error) {
-        console.error('Failed to send verification email:', error);
-        
-        // If email service is not configured, still generate token for manual verification
-        if (error.message.includes('Email service not configured')) {
-            try {
-                await emailService.generateVerificationToken(user.id, user.email);
-                res.json({
-                    message: 'Email service not configured. Verification token generated for manual verification.',
-                    requiresEmailConfig: true
-                });
-            } catch (tokenError) {
-                console.error('Failed to generate verification token:', tokenError);
-                throw new Error('Email service not configured and token generation failed');
-            }
-        } else {
+    // Send new verification email only if email service is configured
+    if (emailService.isConfigured()) {
+        try {
+            await emailService.sendVerificationEmail(user.id, user.email, user.first_name);
+            
+            res.json({
+                message: 'Verification email sent successfully'
+            });
+        } catch (error) {
+            console.error('Failed to send verification email:', error);
             throw new Error('Failed to send verification email');
         }
+    } else {
+        // If email service is not configured, auto-verify the user
+        await database.run(
+            'UPDATE users SET is_verified = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [user.id]
+        );
+        
+        res.json({
+            message: 'Email service not configured. User has been automatically verified.',
+            requiresEmailConfig: false
+        });
     }
 }));
 

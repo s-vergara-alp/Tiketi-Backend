@@ -35,6 +35,10 @@ class EmailService {
         }
     }
 
+    isConfigured() {
+        return !!this.transporter;
+    }
+
     async sendVerificationEmail(userId, email, firstName) {
         if (!this.transporter) {
             throw new Error('Email service not configured');
