@@ -19,7 +19,8 @@ const festivals = [
         secondaryColor: '#004E89',
         accentColor: '#FFA500',
         backgroundColor: '#1A1A1A',
-        decorationIcons: JSON.stringify(['🎸', '🎤', '🥁', '🎵'])
+        decorationIcons: JSON.stringify(['🎸', '🎤', '🥁', '🎵']),
+        logo: 'https://rockalparque.gov.co/sites/default/files/inline-images/rec04_0.png'
     },
     {
         name: 'Festival Estéreo Picnic',
@@ -35,7 +36,8 @@ const festivals = [
         secondaryColor: '#FF006E',
         accentColor: '#FFBE0B',
         backgroundColor: '#0A0A0A',
-        decorationIcons: JSON.stringify(['🎧', '🎹', '🎪', '✨'])
+        decorationIcons: JSON.stringify(['🎧', '🎹', '🎪', '✨']),
+        logo: 'https://networksites.livenationinternational.com/networksites/ywhbh4vf/logo-fep.png?format=webp&width=256&quality=75'
     },
     {
         name: 'Hip Hop al Parque',
@@ -51,7 +53,8 @@ const festivals = [
         secondaryColor: '#000000',
         accentColor: '#FF1493',
         backgroundColor: '#1C1C1C',
-        decorationIcons: JSON.stringify(['🎤', '💿', '🎨', '🔥'])
+        decorationIcons: JSON.stringify(['🎤', '💿', '🎨', '🔥']),
+        logo: 'https://hiphopalparque.gov.co/sites/default/files/images/logo-hiphop-01.png'
     },
     {
         name: 'Salsa al Parque',
@@ -67,7 +70,8 @@ const festivals = [
         secondaryColor: '#FFD700',
         accentColor: '#FF6347',
         backgroundColor: '#2F2F2F',
-        decorationIcons: JSON.stringify(['🎺', '🎷', '🥁', '💃'])
+        decorationIcons: JSON.stringify(['🎺', '🎷', '🥁', '💃']),
+        logo: null
     }
 ];
 
@@ -248,7 +252,7 @@ async function createFestival(festivalData, token) {
         accentColor: festivalData.accentColor,
         backgroundColor: festivalData.backgroundColor,
         decorationIcons: decorationIcons,
-        logo: null,
+        logo: festivalData.logo || null,
         bleEnabled: true,
         biometricEnabled: true
     }, token);
