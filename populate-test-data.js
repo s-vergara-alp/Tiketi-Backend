@@ -889,12 +889,102 @@ async function populateDatabase() {
             }
         }
 
+        console.log('\n=== STEP 11: Creating Door Locks (Rooms) via API ===\n');
+        const createdRooms = {};
+        
+        for (const festival of createdFestivals) {
+            createdRooms[festival.id] = [];
+            
+            const rooms = [
+                { 
+                    name: 'VIP Lounge', 
+                    description: 'Exclusive VIP lounge area',
+                    location: 'Main Building, 2nd Floor',
+                    bleAddress: 'AA:BB:CC:DD:EE:01'
+                },
+                { 
+                    name: 'Backstage Area', 
+                    description: 'Artist backstage access',
+                    location: 'Back of Main Stage',
+                    bleAddress: 'AA:BB:CC:DD:EE:02'
+                },
+                { 
+                    name: 'Media Room', 
+                    description: 'Press and media area',
+                    location: 'Media Center',
+                    bleAddress: 'AA:BB:CC:DD:EE:03'
+                },
+                { 
+                    name: 'Storage Room', 
+                    description: 'Equipment storage',
+                    location: 'Backstage, Basement',
+                    bleAddress: 'AA:BB:CC:DD:EE:04'
+                }
+            ];
+
+            for (let i = 0; i < rooms.length; i++) {
+                const room = rooms[i];
+                const roomId = `room-${festival.id}-${i + 1}`;
+                
+                const result = await makeRequest('POST', `/room/${roomId}/register`, {
+                    roomName: `${room.name} - ${festival.name}`,
+                    description: room.description,
+                    location: room.location,
+                    bleAddress: room.bleAddress,
+                    bleName: `DoorLock-${festival.id}-${i + 1}`
+                }, adminToken);
+                
+                if (result.success) {
+                    console.log(`✅ Room ${room.name} created for ${festival.name}`);
+                    createdRooms[festival.id].push({ id: roomId, ...room });
+                } else {
+                    console.log(`❌ Failed to create room ${room.name}:`, result.error);
+                }
+                await delay(500);
+            }
+        }
+
+        console.log('\n=== STEP 12: Granting Room Permissions to Users ===\n');
+        if (userTokens.length > 0 && Object.keys(createdRooms).length > 0) {
+            for (let i = 0; i < userTokens.length; i++) {
+                const { user } = userTokens[i];
+                const userId = user.id;
+                
+                for (const festival of createdFestivals) {
+                    const rooms = createdRooms[festival.id] || [];
+                    
+                    if (rooms.length === 0) continue;
+                    
+                    const roomsToGrant = user.is_admin || user.isAdmin 
+                        ? rooms 
+                        : rooms.slice(0, Math.ceil(rooms.length / 2));
+                    
+                    for (const room of roomsToGrant) {
+                        const result = await makeRequest('POST', `/room/${room.id}/permission`, {
+                            userId: userId
+                        }, adminToken);
+                        
+                        if (result.success) {
+                            console.log(`✅ Granted access to ${room.name} for ${user.username}`);
+                        } else {
+                            console.log(`❌ Failed to grant permission:`, result.error);
+                        }
+                        await delay(300);
+                    }
+                }
+            }
+        } else {
+            console.log('Skipping room permission assignment (no users or rooms).\n');
+        }
+
         console.log('\n✅ Database population completed!');
         console.log(`\nSummary:`);
         console.log(`- Users created via API: ${createdUsers.length}`);
         console.log(`- Festivals created: ${createdFestivals.length}`);
         console.log(`- Artists created: ${createdArtists.length}`);
         console.log(`- Tickets created: ${userTokens.length > 0 ? userTokens.length * 2 : 0}`);
+        const totalRooms = Object.values(createdRooms).reduce((sum, rooms) => sum + rooms.length, 0);
+        console.log(`- Rooms created: ${totalRooms}`);
         console.log(`\nTest Users (you can now log in with these):`);
         createdUsers.forEach(user => {
             const password = user.isAdmin ? 'admin123' : 'password123';

@@ -44,6 +44,7 @@ const bleRoutes = require('./routes/ble');
 const biometricRoutes = require('./routes/biometric');
 const ticketValidationRoutes = require('./routes/ticket-validation');
 const adminRoutes = require('./routes/admin');
+const roomRoutes = require('./routes/room');
 
 // Import middleware
 const { authenticateToken } = require('./middleware/auth');
@@ -160,6 +161,7 @@ app.use('/api/chat', authenticateToken, chatRoutes);
 app.use('/api/users', authenticateToken, userRoutes);
 app.use('/api/mesh', authenticateToken, meshRoutes);
 app.use('/api/admin', authenticateToken, adminRoutes);
+app.use('/api/room', roomRoutes);
 
 // Serve static files (if any)
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
