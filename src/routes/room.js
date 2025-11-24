@@ -2,51 +2,64 @@ const express = require('express');
 const router = express.Router();
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { asyncHandler, createValidationError, createNotFoundError } = require('../middleware/errorHandler');
+const { DatabaseError } = require('../utils/errors');
 const database = require('../database/database');
 const { v4: uuidv4 } = require('uuid');
 
 router.get('/list', authenticateToken, asyncHandler(async (req, res) => {
     const isAdmin = req.user.is_admin === 1 || req.user.role === 'admin';
     
-    let rooms;
-    if (isAdmin) {
-        rooms = await database.all(`
-            SELECT 
-                id as id,
-                name as name,
-                description as description,
-                location as location,
-                status as status,
-                ble_address as bleAddress,
-                ble_name as bleName,
-                created_at as createdAt,
-                updated_at as updatedAt
-            FROM door_locks
-            ORDER BY name ASC
-        `);
-    } else {
-        rooms = await database.all(`
-            SELECT 
-                id as id,
-                name as name,
-                description as description,
-                location as location,
-                status as status,
-                ble_address as bleAddress,
-                ble_name as bleName,
-                created_at as createdAt,
-                updated_at as updatedAt
-            FROM door_locks
-            WHERE id IN (
-                SELECT DISTINCT room_id 
-                FROM room_permissions 
-                WHERE user_id = ?
-            )
-            ORDER BY name ASC
-        `, [req.user.id]);
+    let rooms = [];
+    
+    try {
+        if (isAdmin) {
+            rooms = await database.all(`
+                SELECT 
+                    id,
+                    name,
+                    description,
+                    location,
+                    status,
+                    ble_address as bleAddress,
+                    ble_name as bleName,
+                    created_at as createdAt,
+                    updated_at as updatedAt
+                FROM door_locks
+                ORDER BY name ASC
+            `);
+        } else {
+            rooms = await database.all(`
+                SELECT 
+                    id,
+                    name,
+                    description,
+                    location,
+                    status,
+                    ble_address as bleAddress,
+                    ble_name as bleName,
+                    created_at as createdAt,
+                    updated_at as updatedAt
+                FROM door_locks
+                WHERE id IN (
+                    SELECT DISTINCT room_id 
+                    FROM room_permissions 
+                    WHERE user_id = ?
+                )
+                ORDER BY name ASC
+            `, [req.user.id]);
+        }
+    } catch (error) {
+        console.error('Error fetching rooms:', error);
+        
+        if (error.code === 'SQLITE_ERROR' && error.message.includes('no such table')) {
+            console.warn('door_locks table does not exist. Returning empty rooms list.');
+            return res.json({ rooms: [] });
+        }
+        
+        throw new DatabaseError('Failed to fetch rooms', error);
     }
 
-    const formattedRooms = rooms.map(room => ({
+    const formattedRooms = (rooms || []).map(room => ({
         id: room.id,
         name: room.name,
         description: room.description || undefined,

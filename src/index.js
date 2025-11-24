@@ -35,6 +35,10 @@ async function startServer() {
                 await execAsync('node src/database/migrate_roles.js');
                 console.log('Role migration completed successfully');
                 
+                console.log('Running room migration...');
+                await execAsync('node src/database/migrate_room.js');
+                console.log('Room migration completed successfully');
+                
                 console.log('Running database seeding...');
                 await execAsync('node src/database/seed.js');
                 console.log('Seeding completed successfully');
@@ -59,6 +63,23 @@ async function startServer() {
                     console.log('Mesh migration completed successfully');
                 } catch (error) {
                     console.warn('Mesh migration failed (non-critical):', error.message);
+                }
+            }
+            
+            // Check if room tables exist, run migration if they don't
+            const roomTableExists = await database.get(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='door_locks'"
+            );
+            if (!roomTableExists) {
+                console.log('Room/door lock tables not found. Running room migration...');
+                const { exec } = require('child_process');
+                const { promisify } = require('util');
+                const execAsync = promisify(exec);
+                try {
+                    await execAsync('node src/database/migrate_room.js');
+                    console.log('Room migration completed successfully');
+                } catch (error) {
+                    console.warn('Room migration failed (non-critical):', error.message);
                 }
             }
         }
