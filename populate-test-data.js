@@ -4,13 +4,25 @@ const { v4: uuidv4 } = require('uuid');
 
 const API_BASE_URL = process.env.API_BASE_URL || 'https://tiketi-backend.onrender.com/api';
 
+// Calculate dates relative to today to ensure they're in the future
+const today = new Date();
+const getFutureDate = (monthsFromNow, day, hour = 10) => {
+    const date = new Date(today);
+    date.setMonth(date.getMonth() + monthsFromNow);
+    // Use day 15 if specified day doesn't exist in target month
+    const maxDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    date.setDate(Math.min(day, maxDay));
+    date.setHours(hour, 0, 0, 0);
+    return date.toISOString();
+};
+
 const festivals = [
     {
         name: 'Rock al Parque',
         description: 'One of the largest free rock festivals in Latin America, featuring 56 bands including local, national, and international acts.',
         venue: 'Parque Metropolitano Simón Bolívar',
-        startDate: '2025-06-15T10:00:00Z',
-        endDate: '2025-06-17T23:00:00Z',
+        startDate: getFutureDate(2, 15, 10),
+        endDate: getFutureDate(2, 17, 23),
         latitude: 4.6486,
         longitude: -74.0836,
         latitudeDelta: 0.01,
@@ -26,8 +38,8 @@ const festivals = [
         name: 'Festival Estéreo Picnic',
         description: 'Major music festival showcasing rock, electronic, pop, and alternative music with over 70 artists.',
         venue: 'Parque Simón Bolívar',
-        startDate: '2025-03-27T10:00:00Z',
-        endDate: '2025-03-30T23:00:00Z',
+        startDate: getFutureDate(1, 27, 10),
+        endDate: getFutureDate(1, 30, 23),
         latitude: 4.6486,
         longitude: -74.0836,
         latitudeDelta: 0.01,
@@ -43,8 +55,8 @@ const festivals = [
         name: 'Hip Hop al Parque',
         description: 'One of the most significant hip-hop festivals in Latin America, celebrating rap, breakdance, DJing, and graffiti.',
         venue: 'Parque Metropolitano Simón Bolívar',
-        startDate: '2025-08-20T12:00:00Z',
-        endDate: '2025-08-22T23:00:00Z',
+        startDate: getFutureDate(3, 20, 12),
+        endDate: getFutureDate(3, 22, 23),
         latitude: 4.6486,
         longitude: -74.0836,
         latitudeDelta: 0.01,
@@ -60,8 +72,8 @@ const festivals = [
         name: 'Salsa al Parque',
         description: 'Celebrating salsa music with renowned artists from Colombia and Latin America.',
         venue: 'Parque Simón Bolívar',
-        startDate: '2025-10-04T14:00:00Z',
-        endDate: '2025-10-05T23:00:00Z',
+        startDate: getFutureDate(4, 4, 14),
+        endDate: getFutureDate(4, 5, 23),
         latitude: 4.6486,
         longitude: -74.0836,
         latitudeDelta: 0.01,
@@ -634,27 +646,54 @@ async function populateDatabase() {
             const festivalEnd = new Date(festival.end_date || festival.endDate);
             const stages = createdStages[festival.id] || [];
             
-            if (stages.length === 0) continue;
+            if (stages.length === 0) {
+                console.log(`⚠️  No stages found for ${festival.name}, skipping schedule creation`);
+                continue;
+            }
 
-            const artistsForFestival = createdArtists.slice(0, Math.min(8, createdArtists.length));
+            // Use ALL artists for comprehensive schedule
+            const artistsForFestival = createdArtists;
+            console.log(`Creating schedule for ${festival.name} with ${artistsForFestival.length} artists across ${stages.length} stages`);
             
-            for (let day = 0; day < 3; day++) {
+            // Calculate number of days in festival
+            const daysDiff = Math.ceil((festivalEnd - festivalStart) / (1000 * 60 * 60 * 24));
+            const numDays = Math.max(1, daysDiff);
+            
+            // Create schedule for each day
+            for (let day = 0; day < numDays; day++) {
                 const currentDate = new Date(festivalStart);
                 currentDate.setDate(currentDate.getDate() + day);
-                currentDate.setHours(12, 0, 0, 0);
-
-                let currentTime = new Date(currentDate);
                 
-                for (let i = 0; i < artistsForFestival.length; i++) {
-                    const artist = artistsForFestival[i];
-                    const stage = stages[i % stages.length];
+                // Start earlier in the day (10 AM) and go until late (11 PM)
+                const dayStart = new Date(currentDate);
+                dayStart.setHours(10, 0, 0, 0);
+                
+                const dayEnd = new Date(currentDate);
+                dayEnd.setHours(23, 0, 0, 0);
+                
+                // Don't go past festival end
+                if (dayEnd > festivalEnd) {
+                    dayEnd.setTime(festivalEnd.getTime());
+                }
+                
+                let currentTime = new Date(dayStart);
+                let artistIndex = 0;
+                let stageIndex = 0;
+                
+                // Create performances throughout the day
+                while (currentTime < dayEnd && artistIndex < artistsForFestival.length) {
+                    const artist = artistsForFestival[artistIndex % artistsForFestival.length];
+                    const stage = stages[stageIndex % stages.length];
                     
+                    // Performance duration: 1-2 hours
+                    const duration = Math.random() > 0.5 ? 90 : 60; // 60 or 90 minutes
                     const startTime = new Date(currentTime);
                     const endTime = new Date(startTime);
-                    endTime.setHours(endTime.getHours() + 1);
-
-                    if (endTime > festivalEnd) break;
-
+                    endTime.setMinutes(endTime.getMinutes() + duration);
+                    
+                    // Don't schedule past day end
+                    if (endTime > dayEnd) break;
+                    
                     const scheduleData = {
                         festivalId: festival.id,
                         artistId: artist.id,
@@ -667,10 +706,19 @@ async function populateDatabase() {
                     await createSchedule(scheduleData, adminToken);
                     await delay(300);
 
+                    // Move to next time slot (add 15-30 min gap between performances)
                     currentTime = new Date(endTime);
-                    currentTime.setMinutes(currentTime.getMinutes() + 30);
+                    currentTime.setMinutes(currentTime.getMinutes() + (Math.random() > 0.5 ? 15 : 30));
+                    
+                    artistIndex++;
+                    // Rotate stages more frequently
+                    if (artistIndex % 2 === 0) {
+                        stageIndex++;
+                    }
                 }
             }
+            
+            console.log(`✅ Created schedule for ${festival.name}`);
         }
 
         console.log('\n=== STEP 7: Creating Ticket Templates via API ===\n');

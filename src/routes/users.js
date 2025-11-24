@@ -177,48 +177,68 @@ router.get('/nearby/:festivalId', asyncHandler(async (req, res) => {
 
     // Get nearby users using simple distance calculation
     // In production, you might want to use a more sophisticated geospatial query
-    const nearbyUsers = await database.all(`
-        SELECT 
-            up.*,
-            u.first_name,
-            u.last_name,
-            u.avatar,
-            u.username,
-            mi.fingerprint as mesh_fingerprint,
-            mi.nickname as mesh_nickname
-        FROM user_presence up
-        JOIN users u ON up.user_id = u.id
-        LEFT JOIN mesh_identities mi ON up.user_id = mi.user_id AND mi.festival_id = ? AND mi.is_active = 1
-        WHERE up.festival_id = ? 
-        AND up.user_id != ?
-        AND up.status = 'online'
-        AND (
-            (up.latitude BETWEEN ? - 0.01 AND ? + 0.01) AND
-            (up.longitude BETWEEN ? - 0.01 AND ? + 0.01)
-        )
-        ORDER BY up.last_seen DESC
-        LIMIT 50
-    `, [festivalId, festivalId, userId, parseFloat(latitude), parseFloat(latitude), parseFloat(longitude), parseFloat(longitude)]);
+    let nearbyUsers = [];
+    try {
+        // Query without mesh_identities (table may not exist)
+        nearbyUsers = await database.all(`
+            SELECT 
+                up.id,
+                up.user_id,
+                up.festival_id,
+                up.latitude,
+                up.longitude,
+                up.status,
+                up.last_seen,
+                u.first_name,
+                u.last_name,
+                u.avatar,
+                u.username
+            FROM user_presence up
+            JOIN users u ON up.user_id = u.id
+            WHERE up.festival_id = ? 
+            AND up.user_id != ?
+            AND up.status = 'online'
+            AND (
+                (up.latitude BETWEEN ? - 0.01 AND ? + 0.01) AND
+                (up.longitude BETWEEN ? - 0.01 AND ? + 0.01)
+            )
+            ORDER BY up.last_seen DESC
+            LIMIT 50
+        `, [festivalId, userId, parseFloat(latitude), parseFloat(latitude), parseFloat(longitude), parseFloat(longitude)]);
+    } catch (error) {
+        console.error('Error fetching nearby users:', error);
+        // Return empty array if query fails
+        nearbyUsers = [];
+    }
 
     // Calculate actual distances and filter by radius
     const usersWithDistance = nearbyUsers
         .map(user => {
-            const distance = calculateDistance(
-                parseFloat(latitude), parseFloat(longitude),
-                user.latitude, user.longitude
-            );
-            return {
-                ...user,
-                distance: Math.round(distance),
-                location: {
-                    lat: user.latitude,
-                    lon: user.longitude
-                },
-                meshFingerprint: user.mesh_fingerprint || null,
-                meshNickname: user.mesh_nickname || null
-            };
+            try {
+                const distance = calculateDistance(
+                    parseFloat(latitude), parseFloat(longitude),
+                    parseFloat(user.latitude), parseFloat(user.longitude)
+                );
+                return {
+                    id: user.user_id,
+                    firstName: user.first_name,
+                    lastName: user.last_name,
+                    username: user.username,
+                    avatar: user.avatar,
+                    distance: Math.round(distance),
+                    location: {
+                        lat: parseFloat(user.latitude),
+                        lon: parseFloat(user.longitude)
+                    },
+                    meshFingerprint: null,
+                    meshNickname: null
+                };
+            } catch (error) {
+                console.error('Error calculating distance for user:', error);
+                return null;
+            }
         })
-        .filter(user => user.distance <= radius)
+        .filter(user => user !== null && user.distance <= radius)
         .sort((a, b) => a.distance - b.distance);
 
     res.json({
