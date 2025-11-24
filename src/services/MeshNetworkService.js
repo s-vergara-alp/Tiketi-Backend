@@ -477,15 +477,25 @@ class MeshNetworkService extends EventEmitter {
         // Clean up expired sessions every 5 minutes
         setInterval(async () => {
             try {
-                await this.db.run(
-                    'UPDATE mesh_sessions SET is_active = 0 WHERE expires_at < CURRENT_TIMESTAMP'
+                // Check if mesh_sessions table exists before trying to update
+                const tableExists = await this.db.get(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='mesh_sessions'"
                 );
+                
+                if (tableExists) {
+                    await this.db.run(
+                        'UPDATE mesh_sessions SET is_active = 0 WHERE expires_at < CURRENT_TIMESTAMP'
+                    );
+                }
                 
                 // Clear peer cache periodically
                 this.peerCache.clear();
                 
             } catch (error) {
-                console.error('Error in cleanup interval:', error);
+                // Only log if it's not a "table doesn't exist" error
+                if (!error.message.includes('no such table')) {
+                    console.error('Error in cleanup interval:', error);
+                }
             }
         }, 5 * 60 * 1000);
         

@@ -44,6 +44,23 @@ async function startServer() {
                 console.error('Error initializing database:', error);
                 process.exit(1);
             }
+        } else {
+            // Check if mesh tables exist, run migration if they don't
+            const meshTableExists = await database.get(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='mesh_sessions'"
+            );
+            if (!meshTableExists) {
+                console.log('Mesh network tables not found. Running mesh migration...');
+                const { exec } = require('child_process');
+                const { promisify } = require('util');
+                const execAsync = promisify(exec);
+                try {
+                    await execAsync('node src/database/migrate_mesh.js');
+                    console.log('Mesh migration completed successfully');
+                } catch (error) {
+                    console.warn('Mesh migration failed (non-critical):', error.message);
+                }
+            }
         }
 
         // Start server

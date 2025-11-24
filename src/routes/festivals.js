@@ -342,7 +342,11 @@ router.post('/', authenticateToken, requireAdmin, [
         ]);
     } catch (dbError) {
         console.error('Database error creating festival:', dbError);
-        throw createValidationError(`Failed to create festival: ${dbError.message}`);
+        const error = new Error(`Failed to create festival: ${dbError.message}`);
+        error.name = 'DatabaseError';
+        error.code = 'DATABASE_ERROR';
+        error.originalError = dbError;
+        throw error;
     }
 
     const festival = await database.get(`

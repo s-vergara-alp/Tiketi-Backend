@@ -210,7 +210,23 @@ async function loginUser(email, password) {
     }
 }
 
+async function getFestivals(token) {
+    const result = await makeRequest('GET', '/festivals', null, token);
+    if (result.success && Array.isArray(result.data)) {
+        return result.data;
+    }
+    return [];
+}
+
 async function createFestival(festivalData, token) {
+    // Check if festival already exists
+    const existingFestivals = await getFestivals(token);
+    const existing = existingFestivals.find(f => f.name === festivalData.name);
+    if (existing) {
+        console.log(`✅ Festival ${festivalData.name} already exists, using existing`);
+        return existing;
+    }
+    
     console.log(`Creating festival via API: ${festivalData.name}...`);
     
     const decorationIcons = typeof festivalData.decorationIcons === 'string' 
@@ -249,13 +265,19 @@ async function createFestival(festivalData, token) {
 async function createArtist(artistData, token) {
     console.log(`Creating artist via API: ${artistData.name}...`);
     
-    const result = await makeRequest('POST', '/artists', {
+    const payload = {
         name: artistData.name,
         bio: artistData.bio,
         genre: artistData.genre,
-        imageUrl: artistData.imageUrl || null,
         socialMedia: artistData.socialMedia || {}
-    }, token);
+    };
+    
+    // Only include imageUrl if it's a valid URL
+    if (artistData.imageUrl && artistData.imageUrl.startsWith('http')) {
+        payload.imageUrl = artistData.imageUrl;
+    }
+    
+    const result = await makeRequest('POST', '/artists', payload, token);
     
     if (result.success && result.data.artist) {
         console.log(`✅ Artist ${artistData.name} created successfully`);
@@ -266,7 +288,32 @@ async function createArtist(artistData, token) {
     }
 }
 
+async function getArtists(token) {
+    console.log('Fetching existing artists...');
+    const result = await makeRequest('GET', '/artists', null, token);
+    if (result.success && result.data.artists) {
+        return result.data.artists;
+    }
+    return [];
+}
+
+async function getFestivalStages(festivalId, token) {
+    const result = await makeRequest('GET', `/festivals/${festivalId}`, null, token);
+    if (result.success && result.data.stages) {
+        return result.data.stages;
+    }
+    return [];
+}
+
 async function createStage(stageData, token) {
+    // Check if stage already exists for this festival
+    const existingStages = await getFestivalStages(stageData.festivalId, token);
+    const existing = existingStages.find(s => s.name === stageData.name && s.festival_id === stageData.festivalId);
+    if (existing) {
+        console.log(`✅ Stage ${stageData.name} already exists for festival, using existing`);
+        return existing;
+    }
+    
     console.log(`Creating stage via API: ${stageData.name}...`);
     
     const result = await makeRequest('POST', `/festivals/${stageData.festivalId}/stages`, {
@@ -286,7 +333,27 @@ async function createStage(stageData, token) {
     }
 }
 
+async function getFestivalSchedule(festivalId, token) {
+    const result = await makeRequest('GET', `/schedule/festival/${festivalId}`, null, token);
+    if (result.success && result.data.schedule) {
+        return result.data.schedule;
+    }
+    return [];
+}
+
 async function createSchedule(scheduleData, token) {
+    // Check if schedule entry already exists (same artist, stage, and time)
+    const existingSchedule = await getFestivalSchedule(scheduleData.festivalId, token);
+    const existing = existingSchedule.find(s => 
+        s.artist_id === scheduleData.artistId &&
+        s.stage_id === scheduleData.stageId &&
+        s.start_time === scheduleData.startTime
+    );
+    if (existing) {
+        console.log(`✅ Schedule entry already exists, skipping`);
+        return existing;
+    }
+    
     console.log(`Creating schedule entry via API...`);
     
     const result = await makeRequest('POST', '/schedule', {
@@ -307,7 +374,23 @@ async function createSchedule(scheduleData, token) {
     }
 }
 
+async function getFestivalTicketTemplates(festivalId, token) {
+    const result = await makeRequest('GET', `/tickets/templates/${festivalId}`, null, token);
+    if (result.success && Array.isArray(result.data)) {
+        return result.data;
+    }
+    return [];
+}
+
 async function createTicketTemplate(templateData, token) {
+    // Check if template already exists
+    const existingTemplates = await getFestivalTicketTemplates(templateData.festivalId, token);
+    const existing = existingTemplates.find(t => t.name === templateData.name && t.festival_id === templateData.festivalId);
+    if (existing) {
+        console.log(`✅ Ticket template ${templateData.name} already exists, using existing`);
+        return existing;
+    }
+    
     console.log(`Creating ticket template via API: ${templateData.name}...`);
     
     const result = await makeRequest('POST', '/tickets/templates', {
@@ -449,23 +532,19 @@ async function populateDatabase() {
 
         console.log(`✅ Using admin token for: ${adminUser?.username || adminTokenEntry?.user?.username || 'admin'}\n`);
 
-        console.log('\n=== STEP 3: Creating Festivals via API ===\n');
+        console.log('\n=== STEP 3: Creating/Fetching Festivals via API ===\n');
         
         for (const festivalData of festivals) {
             const festival = await createFestival(festivalData, adminToken);
             if (festival) {
                 createdFestivals.push(festival);
             }
-            await delay(1000);
+            await delay(500);
         }
 
         if (createdFestivals.length === 0) {
-            console.log('❌ No festivals created. Cannot proceed.');
-            return;
-        }
-
-        if (createdFestivals.length === 0) {
-            console.log('⚠️  No festivals created. Skipping remaining steps that require festivals.\n');
+            console.log('❌ No festivals available. Cannot proceed.');
+            console.log('⚠️  No festivals created or found. Skipping remaining steps that require festivals.\n');
             console.log('✅ User creation completed successfully!');
             console.log(`\nSummary:`);
             console.log(`- Users created: ${createdUsers.length}`);
@@ -476,8 +555,21 @@ async function populateDatabase() {
             return;
         }
 
-        console.log('\n=== STEP 4: Creating Artists via API ===\n');
+        console.log('\n=== STEP 4: Creating/Fetching Artists via API ===\n');
+        // First, try to get existing artists
+        const existingArtists = await getArtists(adminToken);
+        console.log(`Found ${existingArtists.length} existing artists`);
+        
+        // Create new artists that don't exist
         for (const artistData of artists) {
+            // Check if artist already exists
+            const existing = existingArtists.find(a => a.name === artistData.name);
+            if (existing) {
+                console.log(`✅ Artist ${artistData.name} already exists, using existing`);
+                createdArtists.push(existing);
+                continue;
+            }
+            
             const socialMedia = {
                 instagram: `@${artistData.name.toLowerCase().replace(/\s+/g, '')}`,
                 twitter: `@${artistData.name.toLowerCase().replace(/\s+/g, '')}`
@@ -488,15 +580,33 @@ async function populateDatabase() {
             }
             await delay(500);
         }
+        
+        // If we still don't have artists, use existing ones
+        if (createdArtists.length === 0 && existingArtists.length > 0) {
+            console.log(`⚠️  No new artists created, using ${existingArtists.length} existing artists`);
+            createdArtists.push(...existingArtists.slice(0, 8));
+        }
 
-        console.log('\n=== STEP 5: Creating Stages via API ===\n');
+        console.log('\n=== STEP 5: Creating/Fetching Stages via API ===\n');
         const stageNames = ['Main Stage', 'Electronic Stage', 'Rock Stage', 'Hip Hop Stage', 'Salsa Stage'];
         
         for (const festival of createdFestivals) {
-            createdStages[festival.id] = [];
+            // Get existing stages first
+            const existingStages = await getFestivalStages(festival.id, adminToken);
+            createdStages[festival.id] = [...existingStages];
             const numStages = Math.min(3, stageNames.length);
             
             for (let i = 0; i < numStages; i++) {
+                // Check if stage already exists
+                const existing = existingStages.find(s => s.name === stageNames[i]);
+                if (existing) {
+                    console.log(`✅ Stage ${stageNames[i]} already exists for ${festival.name}, using existing`);
+                    if (!createdStages[festival.id].find(s => s.id === existing.id)) {
+                        createdStages[festival.id].push(existing);
+                    }
+                    continue;
+                }
+                
                 const stageData = {
                     festivalId: festival.id,
                     name: stageNames[i],
@@ -604,7 +714,7 @@ async function populateDatabase() {
                         templateId: template.id,
                         holderName: `${user.first_name || user.firstName} ${user.last_name || user.lastName}`,
                         paymentMethod: {
-                            type: 'card',
+                            type: 'credit_card', // Valid payment method type
                             token: 'test_token_' + uuidv4()
                         },
                         amount: template.price,
@@ -627,7 +737,7 @@ async function populateDatabase() {
                             templateId: template.id,
                             holderName: `${user.first_name || user.firstName} ${user.last_name || user.lastName}`,
                             paymentMethod: {
-                                type: 'card',
+                                type: 'credit_card', // Valid payment method type
                                 token: 'test_token_' + uuidv4()
                             },
                             amount: template.price,
@@ -645,6 +755,12 @@ async function populateDatabase() {
 
         console.log('\n=== STEP 9: Creating Vendors via API ===\n');
         for (const festival of createdFestivals) {
+            // Get existing vendors for this festival
+            const existingVendorsResult = await makeRequest('GET', `/vendors/festival/${festival.id}`, null, adminToken);
+            const existingVendors = existingVendorsResult.success && existingVendorsResult.data.vendors 
+                ? existingVendorsResult.data.vendors 
+                : [];
+            
             const vendors = [
                 { name: 'Food Court', type: 'food', latitude: festival.latitude + 0.001, longitude: festival.longitude + 0.001 },
                 { name: 'Bar Central', type: 'drink', latitude: festival.latitude - 0.001, longitude: festival.longitude + 0.001 },
@@ -652,6 +768,13 @@ async function populateDatabase() {
             ];
 
             for (const vendor of vendors) {
+                // Check if vendor already exists
+                const existing = existingVendors.find(v => v.name === vendor.name && v.festival_id === festival.id);
+                if (existing) {
+                    console.log(`✅ Vendor ${vendor.name} already exists, skipping`);
+                    continue;
+                }
+                
                 const result = await makeRequest('POST', '/vendors', {
                     festivalId: festival.id,
                     name: vendor.name,
@@ -675,6 +798,12 @@ async function populateDatabase() {
 
         console.log('\n=== STEP 10: Creating POIs via API ===\n');
         for (const festival of createdFestivals) {
+            // Get existing POIs for this festival
+            const existingPOIsResult = await makeRequest('GET', `/pois/festival/${festival.id}`, null, adminToken);
+            const existingPOIs = existingPOIsResult.success && existingPOIsResult.data.pois 
+                ? existingPOIsResult.data.pois 
+                : [];
+            
             const pois = [
                 { name: 'Main Entrance', kind: 'entrance', latitude: festival.latitude, longitude: festival.longitude - 0.002 },
                 { name: 'Medical Tent', kind: 'medic', latitude: festival.latitude - 0.002, longitude: festival.longitude },
@@ -683,6 +812,13 @@ async function populateDatabase() {
             ];
 
             for (const poi of pois) {
+                // Check if POI already exists
+                const existing = existingPOIs.find(p => p.name === poi.name && p.festival_id === festival.id);
+                if (existing) {
+                    console.log(`✅ POI ${poi.name} already exists, skipping`);
+                    continue;
+                }
+                
                 const result = await makeRequest('POST', '/pois', {
                     festivalId: festival.id,
                     name: poi.name,

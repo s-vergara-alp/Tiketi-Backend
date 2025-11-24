@@ -26,15 +26,25 @@ class SecureQRService {
             );
 
             if (keyRecord) {
-                // Decrypt the key using master key from environment
-                const masterKey = process.env.MASTER_ENCRYPTION_KEY || this.generateMasterKey();
-                const decipher = crypto.createDecipher('aes-256-cbc', masterKey);
-                let decryptedKey = decipher.update(keyRecord.key_data, 'hex', 'utf8');
-                decryptedKey += decipher.final('utf8');
-                return Buffer.from(decryptedKey, 'hex');
+                try {
+                    // Decrypt the key using master key from environment
+                    const masterKey = process.env.MASTER_ENCRYPTION_KEY || this.generateMasterKey();
+                    const decipher = crypto.createDecipher('aes-256-cbc', masterKey);
+                    let decryptedKey = decipher.update(keyRecord.key_data, 'hex', 'utf8');
+                    decryptedKey += decipher.final('utf8');
+                    return Buffer.from(decryptedKey, 'hex');
+                } catch (decryptError) {
+                    // If decryption fails (e.g., wrong master key), deactivate the old key and generate a new one
+                    console.warn(`Failed to decrypt existing key for ${keyType}, generating new key. Error: ${decryptError.message}`);
+                    await database.run(
+                        'UPDATE encryption_keys SET is_active = 0 WHERE key_type = ? AND id = ?',
+                        [keyType, keyRecord.id]
+                    );
+                    // Fall through to generate new key
+                }
             }
 
-            // Generate new key if none exists
+            // Generate new key if none exists or decryption failed
             return await this.generateNewEncryptionKey(keyType);
         } catch (error) {
             console.error('Error getting encryption key:', error);
